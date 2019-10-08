@@ -2,20 +2,17 @@ import cv2
 import numpy as np
 
 number_of_keypoint = 500
-h_min = 160
+h_min = 110
 
 
 def main():
-    img = cv2.imread('../images/darts1.jpg')
+    img = cv2.imread('../images/darts1_2.jpg')
     img1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Initiate ORB
     orb = cv2.ORB_create(number_of_keypoint)
 
     kp, des = orb.detectAndCompute(img1, None)
-
-    img2 = cv2.drawKeypoints(img1, kp, None, flags=cv2.DrawMatchesFlags_DRAW_RICH_KEYPOINTS, color=(0, 255, 0))
-    img2 = cv2.resize(img2, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
 
     description_bitstring_array = uint8_array_to_bitstring(des)
     sorted_hamming_distance_array = make_all_hamming_distance(description_bitstring_array)
@@ -24,13 +21,22 @@ def main():
     filtered_indices = get_draw_indices(filtered_hamming_distance_array)
     kp2 = get_draw_keypoints(kp, filtered_indices)
 
-    cv2.imshow("ORB", img2)
+    draw_keypoints(img1, kp, 0.25, 0.25, "ORB")
+    draw_keypoints(img1, kp2, 0.25, 0.25, "Filtered")
 
-    img3 = cv2.drawKeypoints(img1, kp2, None, flags=cv2.DrawMatchesFlags_DRAW_RICH_KEYPOINTS, color=(0, 255, 0))
-    img3 = cv2.resize(img3, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
-    cv2.imshow("Filetered", img3)
+    print(len(kp2))
 
     cv2.waitKey(0)
+
+
+def draw_keypoints(img, kp, fx=1.0, fy=1.0, title='', isGray=True):
+    if isGray:
+        img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+    for i in kp:
+        img = cv2.circle(img, (int(i.pt[0]), int(i.pt[1])), 10, (0, 255, 0), thickness=-1)
+
+    img = cv2.resize(img, None, fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
+    cv2.imshow(title, img)
 
 
 def get_draw_keypoints(kp, draw_indices):
