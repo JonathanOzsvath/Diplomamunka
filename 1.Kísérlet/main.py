@@ -2,10 +2,9 @@ import cv2
 import numpy as np
 
 numberOfKeypoint = 500
-hMin = 80
 
 
-def bruteForce(keyPoint, description):
+def bruteForce(keyPoint, description, hMin):
     description_bitstring_array = uint8ArrayToBitstring(description)
     sorted_hamming_distance_array = makeAllHammingDistance(description_bitstring_array, description_bitstring_array)
     firstArray = [i[0] for i in sorted_hamming_distance_array]
@@ -19,17 +18,21 @@ def bruteForce(keyPoint, description):
 
     print(len(kp2))
 
-    drawKeypoints(img1, kp2, 0.25, 0.25, "Own Brute Force Filtered")
+    drawKeypoints(img1, kp2, savePath="output/" + str(hMin) + "_OwnBF.png")
 
 
-def drawKeypoints(image, keyPoint, fx=1.0, fy=1.0, title='', isGray=True):
+def drawKeypoints(image, keyPoint, savePath, isShow=False, fx=1.0, fy=1.0, isGray=True):
     if isGray:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
     for i in keyPoint:
         image = cv2.circle(image, (int(i.pt[0]), int(i.pt[1])), 10, (0, 255, 0), thickness=-1)
 
-    image = cv2.resize(image, None, fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
-    cv2.imshow(title, image)
+    cv2.imwrite(savePath, image)
+
+    if isShow:
+        image = cv2.resize(image, None, fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
+        cv2.imshow(savePath, image)
 
 
 def getDrawKeypoints(kp, draw_indices):
@@ -80,7 +83,7 @@ def hammingDistance(bitstring1, bitstring2):
     return counter
 
 
-def opencvBruteForce(keyPoint, description):
+def opencvBruteForce(keyPoint, description, hMin):
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
     matches = bf.knnMatch(description, description, k=2)
     matches2 = matches.copy()
@@ -94,19 +97,23 @@ def opencvBruteForce(keyPoint, description):
 
     print(len(kp2))
 
-    drawKeypoints(img1, kp2, 0.25, 0.25, "OpenCV Brute Force Filtered")
+    drawKeypoints(img1, kp2, savePath="output/" + str(hMin) + "_openCVBF.png")
 
 
 if __name__ == '__main__':
     img = cv2.imread('../images/darts1_2.jpg')
     img1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+    hMinArray = [20, 50, 80]
+
     # Initiate ORB
     orb = cv2.ORB_create(numberOfKeypoint)
     kp, des = orb.detectAndCompute(img1, None)
-    drawKeypoints(img1, kp, 0.25, 0.25, "ORB")
 
-    bruteForce(kp, des)
-    opencvBruteForce(kp, des)
+    for hMin in hMinArray:
+        drawKeypoints(img1, kp, savePath="output/" + str(hMin) + "_ORB.png")
+
+        bruteForce(kp, des, hMin)
+        opencvBruteForce(kp, des, hMin)
 
     cv2.waitKey(0)
