@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
-numberOfKeypoint = 500
+numberOfKeypoint = 1000
 
 
 def bruteForce(keyPoint, description, hMin):
@@ -18,21 +19,26 @@ def bruteForce(keyPoint, description, hMin):
 
     print(len(kp2))
 
-    drawKeypoints(img1, kp2, savePath="output/" + str(hMin) + "_OwnBF.png")
+    drawKeypoints(img1, kp2, fileName=str(hMin) + "_" + str(numberOfKeypoint) + "_OwnBF")
 
 
-def drawKeypoints(image, keyPoint, savePath, isShow=False, fx=1.0, fy=1.0, isGray=True):
+def drawKeypoints(image, keyPoint, fileName, isShow=False, fx=1.0, fy=1.0, isGray=True):
     if isGray:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
-    for i in keyPoint:
-        image = cv2.circle(image, (int(i.pt[0]), int(i.pt[1])), 10, (0, 255, 0), thickness=-1)
+    image1 = image.copy()
+    image2 = image.copy()
 
-    cv2.imwrite(savePath, image)
+    for i in keyPoint:
+        image1 = cv2.circle(image1, (int(i.pt[0]), int(i.pt[1])), int(i.size/2), (0, 255, 0), thickness=1)
+        image2 = cv2.circle(image2, (int(i.pt[0]), int(i.pt[1])), 3, (0, 255, 0), thickness=-1)
+
+    cv2.imwrite("output/" + fileName + "_withSize.jpg", image1)
+    cv2.imwrite("output/" + fileName + ".jpg", image2)
 
     if isShow:
-        image = cv2.resize(image, None, fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
-        cv2.imshow(savePath, image)
+        image = cv2.resize(image1, None, fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
+        cv2.imshow(fileName, image1)
 
 
 def getDrawKeypoints(kp, draw_indices):
@@ -95,25 +101,40 @@ def opencvBruteForce(keyPoint, description, hMin):
     filtered_indices = [i[0].queryIdx for i in filtered_hamming_distance_array]
     kp2 = getDrawKeypoints(keyPoint, filtered_indices)
 
-    print(len(kp2))
+    drawKeypoints(img1, kp2, fileName= str(hMin) + "_" + str(numberOfKeypoint) + "_openCVBF")
 
-    drawKeypoints(img1, kp2, savePath="output/" + str(hMin) + "_openCVBF.png")
+    return len(kp2)
 
 
 if __name__ == '__main__':
     img = cv2.imread('../images/darts1_2.jpg')
+    img = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
     img1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    hMinArray = [20, 50, 80]
+    # hMinArray = list(range(0, 256))
+    hMinArray = [55, 60, 65, 70]
 
     # Initiate ORB
     orb = cv2.ORB_create(numberOfKeypoint)
     kp, des = orb.detectAndCompute(img1, None)
 
+    remainPointsNumber = []
+
     for hMin in hMinArray:
-        drawKeypoints(img1, kp, savePath="output/" + str(hMin) + "_ORB.png")
+        drawKeypoints(img1, kp, fileName=str(hMin) + "_" + str(numberOfKeypoint) + "_ORB")
 
         bruteForce(kp, des, hMin)
-        opencvBruteForce(kp, des, hMin)
+        kpNumber = opencvBruteForce(kp, des, hMin)
+
+        print((hMin, kpNumber))
+        remainPointsNumber.append((hMin, kpNumber))
+
+    plt.plot([i[0] for i in remainPointsNumber], [i[1] for i in remainPointsNumber])
+    plt.title(str(numberOfKeypoint) + "db kulcspont esetén")
+    plt.ylabel("Megmaradt ponotk száma")
+    plt.xlabel("hMin")
+    plt.savefig("output/" + str(numberOfKeypoint) + "_plot.png")
+    plt.show()
+
 
     cv2.waitKey(0)
