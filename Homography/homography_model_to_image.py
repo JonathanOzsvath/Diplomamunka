@@ -15,11 +15,16 @@ def LoadPoints(filename):
     return mouseClicks
 
 
-def Project(points, homograpy_matrix):
+def Project(points, homography_matrix):
+    newPoints = []
 
+    for x, y in points:
+        point = np.array([[x], [y], [1]])
+        newPoint = np.dot(homography_matrix, point)
+        newPoint = (newPoint[0]/newPoint[2], newPoint[1]/newPoint[2])
+        newPoints.append(newPoint)
 
-    # TODO
-    return None
+    return newPoints
 
 
 if __name__ == '__main__':
@@ -32,10 +37,15 @@ if __name__ == '__main__':
     cv2.imshow(imageName, img)
 
     click_points = LoadPoints(imageName + '.click')
-    metric_points = dart_board.getMetricCirclePoints(20)
+    metric_points = dart_board.generateDartBoardRefPoints()
 
     p = np.array([1.0, 2.0])
     homography_matrix, _ = cv2.findHomography(np.array(metric_points), np.array(click_points))
     proj_points = Project(metric_points, homography_matrix)
+
+    for point in proj_points:
+        img = cv2.circle(img, point, 3, (0, 255, 255), thickness=-1)
+
+    cv2.imshow("homography", img)
 
     cv2.waitKey(0)

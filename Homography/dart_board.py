@@ -16,7 +16,7 @@ def generateDartBoardRefPoints():
     r = rays[0]
     points = []
     for i in unitCirclePoints:
-        points.append((int(r * i[0]), int(r * i[1])))
+        points.append((int(r * i[0] + width / 2), int(r * i[1] + height / 2)))
 
     return points
 
