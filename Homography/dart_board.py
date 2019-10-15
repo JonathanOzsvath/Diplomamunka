@@ -6,7 +6,9 @@ width = 780
 height = 1040
 numberOfCirclepoint = 20
 rays = [170, 162, 107, 99, 15.9, 6.35]
-rays = [i * 2 for i in rays]
+
+
+# rays = [i * 2 for i in rays]
 
 
 def generateDartBoardRefPoints():
@@ -22,7 +24,7 @@ def generateDartBoardRefPoints():
 def getMetricCirclePoints(n):
     points = []
     for i in np.arange(-81, 279, 360 / n):
-        points.append((math.cos(math.radians(i)), math.sin(math.radians(i))))
+        points.append((np.float32(math.cos(math.radians(i))), np.float32(math.sin(math.radians(i)))))
 
     return points
 
@@ -45,11 +47,15 @@ def drawDartBoard(img, points, color=(0, 255, 0)):
 
     for i in range(0, 6):
         for j in range(0, 19):
-            point1 = (int(points[i * numberOfCirclepoint + j][0] + width / 2), int(points[i * numberOfCirclepoint + j][1] + height / 2))
-            point2 = (int(points[i * numberOfCirclepoint + j + 1][0] + width / 2), int(points[i * numberOfCirclepoint + j + 1][1] + height / 2))
+            point1 = (int(points[i * numberOfCirclepoint + j][0] + width / 2),
+                      int(points[i * numberOfCirclepoint + j][1] + height / 2))
+            point2 = (int(points[i * numberOfCirclepoint + j + 1][0] + width / 2),
+                      int(points[i * numberOfCirclepoint + j + 1][1] + height / 2))
             img = cv2.line(img, point1, point2, color)
-        point1 = (int(points[i * numberOfCirclepoint][0] + width / 2), int(points[i * numberOfCirclepoint][1] + height / 2))
-        point2 = (int(points[(i + 1) * numberOfCirclepoint - 1][0] + width / 2), int(points[(i + 1) * numberOfCirclepoint - 1][1] + height / 2))
+        point1 = (
+            int(points[i * numberOfCirclepoint][0] + width / 2), int(points[i * numberOfCirclepoint][1] + height / 2))
+        point2 = (int(points[(i + 1) * numberOfCirclepoint - 1][0] + width / 2),
+                  int(points[(i + 1) * numberOfCirclepoint - 1][1] + height / 2))
         img = cv2.line(img, point1, point2, color)
 
     for j in range(0, 20):
