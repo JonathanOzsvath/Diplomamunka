@@ -1,8 +1,12 @@
 import cv2
+import sys
+import os
 import numpy as np
-import Homography.dart_board as dart_board
+import math
+import statistics
+import dart_board
 
-imageName = 'darts1_2'
+imagePath = '../images/darts2_2.jpg'
 
 
 def LoadPoints(filename):
@@ -21,31 +25,94 @@ def Project(points, homography_matrix):
     for x, y in points:
         point = np.array([[x], [y], [1]])
         newPoint = np.dot(homography_matrix, point)
-        newPoint = (newPoint[0]/newPoint[2], newPoint[1]/newPoint[2])
+        newPoint = (newPoint[0] / newPoint[2], newPoint[1] / newPoint[2])
         newPoints.append(newPoint)
 
     return newPoints
 
 
+def calcDistance(point1, point2):
+    return math.sqrt((point2[0] - point1[0]) * (point2[0] - point1[0]) + (point2[1] - point1[1]) * (point2[1] - point1[1]))
+
+
+def ComputeResidualErrors(proj_points, click_points):
+    error_vector = []
+
+    for i in range(len(proj_points)):
+        error_vector.append(calcDistance(proj_points[i], click_points[i]))
+
+    return error_vector
+
+
+def drawReferenceToHomographyPoints(img, click_points, proj_points):
+    for i in range(0, len(proj_points)):
+        img = cv2.circle(img, click_points[i], 3, (0, 0, 255), thickness=-1)
+        img = cv2.circle(img, proj_points[i], 3, (0, 255, 0), thickness=-1)
+        img = cv2.line(img, proj_points[i], click_points[i], (0, 255, 255), thickness=2)
+
+    cv2.imshow("homography", img)
+    cv2.imwrite("output/ReferenceToHomographyPoints.jpg", img)
+
+
+def drawPoints(img, points, color):
+    for point in points:
+        img = cv2.circle(img, point, 3, color, thickness=-1)
+
+    cv2.imshow("Point", img)
+
+
 if __name__ == '__main__':
+
+    argv = sys.argv
+
+    if len(sys.argv) == 2:
+        imagePath = sys.argv[1]
+
+    imageName = os.path.splitext(imagePath)[0]
+    name = imageName.split('/')[-1]
+
     # referencia kép
-    img = cv2.imread('../images/' + imageName + '.jpg')
+    img = cv2.imread(imagePath)
+
+    if img is None:
+        print("Nem sikerült a képet beolvasni!!!")
+        exit(1)
+
     img = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-    cv2.imshow(imageName, img)
+    # cv2.imshow(imageName, img)
 
     click_points = LoadPoints(imageName + '.click')
     metric_points = dart_board.generateDartBoardRefPoints()
 
-    p = np.array([1.0, 2.0])
     homography_matrix, _ = cv2.findHomography(np.array(metric_points), np.array(click_points))
     proj_points = Project(metric_points, homography_matrix)
 
-    for point in proj_points:
-        img = cv2.circle(img, point, 3, (0, 255, 255), thickness=-1)
+    # drawReferenceToHomographyPoints(img, click_points, proj_points)
 
-    cv2.imshow("homography", img)
+    error_vector = ComputeResidualErrors(proj_points, click_points)
+
+    eredmenyPath = "output/eredmenyek.txt"
+    with open("output/eredmenyek.txt", 'a') as f1, open(eredmenyPath, 'r') as f2:
+        contains = False
+
+        for line in f2:
+            if line.find(imagePath) != -1:
+                contains = True
+
+        if not contains:
+            f1.write('imagePath: ' + imagePath + ':\n')
+            f1.write("\tAvg: " + str(statistics.mean(error_vector)) + '\n')
+            f1.write("\tMax: " + str(max(error_vector)) + '\n')
+
+    print("Error vektor átlaga: " + str(statistics.mean(error_vector)))
+    print("Error vektor maximuma: " + str(max(error_vector)))
+
+    dartBoardEdgePoints = dart_board.generateDartBoardEdgePoints()
+    proj_points = Project(dartBoardEdgePoints, homography_matrix)
+
+    dart_board.drawDartBoard(img, proj_points, (0, 255, 0), savePath="output/" + name + "_homography_model_to_image.png")
 
     cv2.waitKey(0)
