@@ -90,6 +90,10 @@ if __name__ == '__main__':
     homography_matrix, _ = cv2.findHomography(np.array(metric_points), np.array(click_points))
     proj_points = Project(metric_points, homography_matrix)
 
+    directory = "output"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     # drawReferenceToHomographyPoints(img, click_points, proj_points)
 
     error_vector = ComputeResidualErrors(proj_points, click_points)
