@@ -6,7 +6,8 @@ import math
 import statistics
 import dart_board
 
-imagePath = '../images/darts2_2.jpg'
+imagePath = '../images/darts1_1.jpg'
+numberOfCirclePointPerSector = 5
 
 
 def LoadPoints(filename):
@@ -83,12 +84,11 @@ if __name__ == '__main__':
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
     # cv2.imshow(imageName, img)
-
     click_points = LoadPoints(imageName + '.click')
-    metric_points = dart_board.generateDartBoardRefPoints()
+    refPoints, circlePoints = dart_board.generateDartBoardEdgePoints(numberOfCirclePointPerSector)
 
-    homography_matrix, _ = cv2.findHomography(np.array(metric_points), np.array(click_points))
-    proj_points = Project(metric_points, homography_matrix)
+    homography_matrix, _ = cv2.findHomography(np.array(refPoints), np.array(click_points))
+    proj_refPoints = Project(refPoints, homography_matrix)
 
     directory = "output"
     if not os.path.exists(directory):
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     # drawReferenceToHomographyPoints(img, click_points, proj_points)
 
-    error_vector = ComputeResidualErrors(proj_points, click_points)
+    error_vector = ComputeResidualErrors(proj_refPoints, click_points)
 
     eredmenyPath = "output/eredmenyek.txt"
     with open("output/eredmenyek.txt", 'a') as f1, open(eredmenyPath, 'r') as f2:
@@ -114,9 +114,8 @@ if __name__ == '__main__':
     print("Error vektor átlaga: " + str(statistics.mean(error_vector)))
     print("Error vektor maximuma: " + str(max(error_vector)))
 
-    dartBoardEdgePoints = dart_board.generateDartBoardEdgePoints()
-    proj_points = Project(dartBoardEdgePoints, homography_matrix)
+    proj_circlepoints = Project(circlePoints, homography_matrix)
 
-    dart_board.drawDartBoard(img, proj_points, (0, 255, 0), savePath="output/" + name + "_homography_model_to_image.png")
+    dart_board.drawDartBoard(img, proj_refPoints, proj_circlepoints, numberOfCirclePointPerSector, (0, 255, 0), savePath="output/" + name + "_homography_model_to_image.png")
 
     cv2.waitKey(0)
