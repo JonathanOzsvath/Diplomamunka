@@ -42,7 +42,7 @@ def draw2NNMatches(perspectiveImage, matches, kpReference, kpPerspective, fileNa
 
 def bfWithOutCrossCheck():
     # create BFMatcher object
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
     # Match descriptors.
     matches = bf.match(des1, des2)
     # Sort them in the order of their distance.
@@ -53,7 +53,7 @@ def bfWithOutCrossCheck():
 
 def bfWithCrossCheck():
     # create BFMatcher object
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     # Match descriptors.
     matches = bf.match(des1, des2)
     # Sort them in the order of their distance.

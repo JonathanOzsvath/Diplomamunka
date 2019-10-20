@@ -7,7 +7,7 @@ import statistics
 import dart_board
 
 imagePath = '../images/darts1_1.jpg'
-numberOfCirclePointPerSector = 5
+numberOfCirclePointPerSector = 1
 
 
 def LoadPoints(filename):

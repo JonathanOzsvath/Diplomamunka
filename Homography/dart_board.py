@@ -88,7 +88,7 @@ def main():
     refPoints, circlePoints = generateDartBoardEdgePoints(numberOfCirclePointPerSector)
 
     img = np.zeros((height, width, 3), dtype=np.uint8)
-    drawDartBoard(img, refPoints, circlePoints, numberOfCirclePointPerSector, shift=(width / 2, height / 2))
+    drawDartBoard(img, refPoints, circlePoints, numberOfCirclePointPerSector, shift=(width / 2, height / 2), savePath='output/ref.png')
 
 
 if __name__ == '__main__':
