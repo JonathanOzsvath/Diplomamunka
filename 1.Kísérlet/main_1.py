@@ -42,7 +42,7 @@ def drawKeypoints(image, keyPoint, fileName, isShow=False, fx=1.0, fy=1.0, isGra
 
 
 def getDrawKeypoints(kp, draw_indices):
-    """ Vissza adja a kirajzolandó kulcspontokat."""
+    """ Vissza adja a kirajzolandó kulcspontokat az indexek alapján."""
     drawKeyPoints = []
     for i in draw_indices:
         drawKeyPoints.append(kp[i])

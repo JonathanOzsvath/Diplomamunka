@@ -7,7 +7,7 @@ import statistics
 import dart_board
 
 imagePath = '../images/darts1_1.jpg'
-numberOfCirclePointPerSector = 1
+numberOfCirclePointPerSector = 10
 
 
 def LoadPoints(filename):
@@ -26,7 +26,7 @@ def Project(points, homography_matrix):
     for x, y in points:
         point = np.array([[x], [y], [1]])
         newPoint = np.dot(homography_matrix, point)
-        newPoint = (newPoint[0] / newPoint[2], newPoint[1] / newPoint[2])
+        newPoint = (int(round((newPoint[0] / newPoint[2])[0])), int(round((newPoint[1] / newPoint[2])[0])))
         newPoints.append(newPoint)
 
     return newPoints

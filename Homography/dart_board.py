@@ -14,7 +14,7 @@ def generateDartBoardRefPoints():
     r = rays[0]
     points = []
     for i in unitCirclePoints:
-        points.append((round(r * i[0]), round(r * i[1])))
+        points.append((int((round(r * i[0]))), int(round(r * i[1]))))
 
     return points
 
@@ -22,7 +22,7 @@ def generateDartBoardRefPoints():
 def getMetricReferenceCirclePoints():
     points = []
     for i in np.arange(-81, 279, 360 / 20):
-        points.append((np.float32(math.cos(math.radians(i))), np.float32(math.sin(math.radians(i)))))
+        points.append((np.float64(math.cos(math.radians(i))), np.float64(math.sin(math.radians(i)))))
 
     return points
 
@@ -31,7 +31,7 @@ def getMetricCirclePoints(numberOfCirclePointPerSector):
     numberOfCirclePoint = 20 * numberOfCirclePointPerSector
     points = []
     for i in np.arange(-81, 279, 360 / numberOfCirclePoint):
-        points.append((np.float32(math.cos(math.radians(i))), np.float32(math.sin(math.radians(i)))))
+        points.append((np.float64(math.cos(math.radians(i))), np.float64(math.sin(math.radians(i)))))
 
     return points
 
@@ -61,7 +61,7 @@ def drawDartBoard(img, referencePoints, circlePoints, numberOfCirclePointPerSect
         refPoint = (int(round(referencePoints[i][0] + shift[0])), int(round(referencePoints[i][1] + shift[1])))
         midPoint = (int(round(middlePoint[i][0] + shift[0])), int(round(middlePoint[i][1] + shift[1])))
         img = cv2.circle(img, refPoint, 3, (0, 0, 255), thickness=-1)
-        img = cv2.line(img, refPoint, midPoint, color, thickness=2)
+        img = cv2.line(img, refPoint, midPoint, color, thickness=2, lineType=cv2.LINE_AA)
 
     for i in range(0, 6):
         for j in range(0, numberOfCirclePoint - 1):
@@ -69,12 +69,12 @@ def drawDartBoard(img, referencePoints, circlePoints, numberOfCirclePointPerSect
                       int(round(circlePoints[i * numberOfCirclePoint + j][1] + shift[1])))
             point2 = (int(round(circlePoints[i * numberOfCirclePoint + j + 1][0] + shift[0])),
                       int(round(circlePoints[i * numberOfCirclePoint + j + 1][1] + shift[1])))
-            img = cv2.line(img, point1, point2, color, thickness=2)
+            img = cv2.line(img, point1, point2, color, thickness=2, lineType=cv2.LINE_AA)
         point1 = (
             int(round(circlePoints[i * numberOfCirclePoint][0] + shift[0])), int(round(circlePoints[i * numberOfCirclePoint][1] + shift[1])))
         point2 = (int(round(circlePoints[(i + 1) * numberOfCirclePoint - 1][0] + shift[0])),
                   int(round(circlePoints[(i + 1) * numberOfCirclePoint - 1][1] + shift[1])))
-        img = cv2.line(img, point1, point2, color, thickness=2)
+        img = cv2.line(img, point1, point2, color, thickness=2, lineType=cv2.LINE_AA)
 
     if savePath != '':
         cv2.imwrite(savePath, img)
