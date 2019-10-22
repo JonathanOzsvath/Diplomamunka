@@ -6,10 +6,17 @@ import numpy as np
 import image_matcher as im
 from tabulate import tabulate
 import dart_board
+import prefilter
+import postfilter
+
+mydata = []
 
 numberOfKeypoint = 500
 numberOfCirclePointPerSector = 3
 max_correct_radius = 5
+minHamming_prefilter = 60
+maxHamming_postfilter = 75
+maxRatio_postfilter = 0.5
 
 
 def getRunTime(start, end):
@@ -17,7 +24,8 @@ def getRunTime(start, end):
 
 
 def calcDistance(point1, point2):
-    return math.sqrt((point2[0] - point1[0]) * (point2[0] - point1[0]) + (point2[1] - point1[1]) * (point2[1] - point1[1]))
+    return math.sqrt(
+        (point2[0] - point1[0]) * (point2[0] - point1[0]) + (point2[1] - point1[1]) * (point2[1] - point1[1]))
 
 
 def LoadPoints(filename):
@@ -95,6 +103,14 @@ def drawPoints(img, points, name, color=(0, 255, 0), isGray=True):
     cv2.imshow(name, img)
 
 
+def addTableRow(path_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, path_perspective, numberOfPerspectiveKeyPoint,
+                detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
+                foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime):
+    mydata.append([path_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, path_perspective, numberOfPerspectiveKeyPoint,
+                  detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
+                  foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime])
+
+
 if __name__ == '__main__':
     name_ref = "darts1_2"
     path_ref = '../images/' + name_ref + '.jpg'
@@ -128,6 +144,9 @@ if __name__ == '__main__':
     end = time.time()
     detectRunTime = getRunTime(start, end)
 
+    kp_ref, des_ref = prefilter.prefilter(kp_ref, des_ref, min_hamming=minHamming_prefilter)
+    numberOfFilteredKeyPoints = numberOfKeypoint - len(kp_ref)
+
     # index_ref, index_perspective = \
     # im.BF(kp_ref, des_ref, kp_perspective, des_perspective)
 
@@ -136,15 +155,23 @@ if __name__ == '__main__':
     end = time.time()
     matchingRunTime = getRunTime(start, end)
 
+    matches = postfilter.distanceFilter(matches, maxHamming=maxHamming_postfilter)
+    matches = postfilter.ratioFilter(matches, maxRatio=maxHamming_postfilter)
+
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
     numberOfInliers, numberOfOutliers = evaluate(matches, kp_ref, kp_perspective, truth_points, outputName)
 
     foundMatches = len(matches)
 
-    mydata = [(
-        path_ref, "-", str(numberOfKeypoint), "-", path_perspective, str(numberOfKeypoint), detectRunTime,
-        outputName, crossCheck, "-", "-", foundMatches, str(foundMatches / numberOfKeypoint * 100),
-        numberOfInliers, str(numberOfInliers / foundMatches * 100), matchingRunTime)]
+    # mydata = [(
+    #     path_ref, "-", str(numberOfKeypoint), "-", path_perspective, str(numberOfKeypoint), detectRunTime,
+    #     outputName, crossCheck, "-", "-", foundMatches, str(foundMatches / numberOfKeypoint * 100),
+    #     numberOfInliers, str(numberOfInliers / foundMatches * 100), matchingRunTime)]
+
+    addTableRow(path_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, path_perspective,
+                numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
+                foundMatches, str(foundMatches / numberOfKeypoint * 100), numberOfInliers,
+                str(numberOfInliers / foundMatches * 100), matchingRunTime)
 
     headers = ["Referenciakép neve", "Előszűrés küszöbértéke", "Detektált pontok száma", "Szűrt pontok száma",
                "Perspektív kép neve", "Detektált pontok száma perspektív képen", "Detektálás futási ideje (ms)",
