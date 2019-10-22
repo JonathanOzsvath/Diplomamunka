@@ -55,7 +55,7 @@ def getMatchesPointWithHomography(kp_ref, matches, homography_matrix):
     return Project(points, homography_matrix)
 
 
-def evaluate(matches, kp_ref, kp_perspective, truth_points, outputFolderName):
+def evaluate(img, matches, kp_ref, kp_perspective, truth_points, outputFolderName):
     goodMatches = []
     badMatches = []
     points = [kp_perspective[match[0].trainIdx].pt for match in matches]
@@ -67,7 +67,7 @@ def evaluate(matches, kp_ref, kp_perspective, truth_points, outputFolderName):
         else:
             badMatches.append(i)
 
-    drawInlierOutlierPoints(img_perspective, points, truth_points, goodMatches, badMatches, outputFolderName)
+    drawInlierOutlierPoints(img, points, truth_points, goodMatches, badMatches, outputFolderName)
 
     return len(goodMatches), len(badMatches)
 
@@ -111,13 +111,9 @@ def addTableRow(path_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyP
                   foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime])
 
 
-if __name__ == '__main__':
-    name_ref = "darts1_2"
+def runMethod(name_ref, name_perspective, prefilterValue, crossCheck, postFilterHamming, postFilterRatio, outputName):
     path_ref = '../images/' + name_ref + '.jpg'
-    name_perspective = "darts2_2"
     path_perspective = '../images/' + name_perspective + '.jpg'
-    outputName = "cvBF_noprefilter_nocheck_nohamming_noratio"
-    crossCheck = False
 
     img_ref = cv2.imread(path_ref)
     img_ref = cv2.resize(img_ref, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
@@ -144,34 +140,56 @@ if __name__ == '__main__':
     end = time.time()
     detectRunTime = getRunTime(start, end)
 
-    kp_ref, des_ref = prefilter.prefilter(kp_ref, des_ref, min_hamming=minHamming_prefilter)
-    numberOfFilteredKeyPoints = numberOfKeypoint - len(kp_ref)
-
-    # index_ref, index_perspective = \
-    # im.BF(kp_ref, des_ref, kp_perspective, des_perspective)
+    if prefilterValue:
+        minHamming_prefilter = prefilterValue
+        kp_ref, des_ref = prefilter.prefilter(kp_ref, des_ref, min_hamming=minHamming_prefilter)
+        numberOfFilteredKeyPoints = numberOfKeypoint - len(kp_ref)
+    else:
+        minHamming_prefilter = '-'
+        numberOfFilteredKeyPoints = '-'
 
     start = time.time()
     matches = im.openCVBF(kp_ref, des_ref, kp_perspective, des_perspective, crossCheck=crossCheck)
     end = time.time()
     matchingRunTime = getRunTime(start, end)
 
-    matches = postfilter.distanceFilter(matches, maxHamming=maxHamming_postfilter)
-    matches = postfilter.ratioFilter(matches, maxRatio=maxHamming_postfilter)
+    if postFilterHamming:
+        maxHamming_postfilter = postFilterHamming
+        matches = postfilter.distanceFilter(matches, maxHamming=maxHamming_postfilter)
+    else:
+        maxHamming_postfilter = '-'
+
+    if postFilterRatio:
+        maxRatio_postfilter = postFilterRatio
+        matches = postfilter.ratioFilter(matches, maxRatio=maxRatio_postfilter)
+    else:
+        maxRatio_postfilter = '-'
 
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
-    numberOfInliers, numberOfOutliers = evaluate(matches, kp_ref, kp_perspective, truth_points, outputName)
+    numberOfInliers, numberOfOutliers = evaluate(img_perspective, matches, kp_ref, kp_perspective, truth_points, outputName)
 
     foundMatches = len(matches)
+
+    addTableRow(path_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, path_perspective,
+                numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
+                foundMatches, str(foundMatches / numberOfKeypoint * 100), numberOfInliers,
+                str(numberOfInliers / foundMatches * 100), matchingRunTime)
+
+
+if __name__ == '__main__':
+    name_ref = "darts1_2"
+
+    name_perspective = "darts2_2"
+
+    runMethod(name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False, outputName="cvBF_noprefilter_nocheck_nohamming_noratio")
+    runMethod(name_ref, name_perspective, prefilterValue=65, crossCheck=False, postFilterHamming=False, postFilterRatio=False, outputName="cvBF_prefilter_nocheck_nohamming_noratio")
 
     # mydata = [(
     #     path_ref, "-", str(numberOfKeypoint), "-", path_perspective, str(numberOfKeypoint), detectRunTime,
     #     outputName, crossCheck, "-", "-", foundMatches, str(foundMatches / numberOfKeypoint * 100),
     #     numberOfInliers, str(numberOfInliers / foundMatches * 100), matchingRunTime)]
 
-    addTableRow(path_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, path_perspective,
-                numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
-                foundMatches, str(foundMatches / numberOfKeypoint * 100), numberOfInliers,
-                str(numberOfInliers / foundMatches * 100), matchingRunTime)
+
 
     headers = ["Referenciakép neve", "Előszűrés küszöbértéke", "Detektált pontok száma", "Szűrt pontok száma",
                "Perspektív kép neve", "Detektált pontok száma perspektív képen", "Detektálás futási ideje (ms)",
