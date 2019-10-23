@@ -14,8 +14,6 @@ mydata = []
 numberOfKeypoint = 1000
 numberOfCirclePointPerSector = 3
 max_correct_radius = 5
-maxHamming_postfilter = 75
-maxRatio_postfilter = 0.5
 
 
 def getRunTime(start, end):
@@ -84,7 +82,7 @@ def drawInlierOutlierPoints(img, points, truth_points, inliers, outliers, output
         good_point = (int(truth_points[i][0]), int(truth_points[i][1]))
         img = cv2.circle(img, bad_point, 3, (0, 0, 255), thickness=-1)
         img = cv2.circle(img, good_point, 3, (0, 255, 255), thickness=-1)
-        img = cv2.line(img, bad_point, good_point, (255, 0, 0), thickness=2)
+        # img = cv2.line(img, bad_point, good_point, (255, 0, 0), thickness=2)
 
     for i in inliers:
         img = cv2.circle(img, (int(points[i][0]), int(points[i][1])), 3, (0, 255, 0), thickness=-1)
@@ -152,6 +150,8 @@ def runMethod(method_name, name_ref, name_perspective, prefilterValue, crossChec
         matches = im.openCVBF(kp_ref, des_ref, kp_perspective, des_perspective, crossCheck=crossCheck)
     elif method_name == 'BF':
         matches = im.BF(kp_ref, des_ref, kp_perspective, des_perspective)
+    elif method_name == 'FLANN':
+        matches = im.flann(des_ref, des_perspective)
     end = time.time()
     matchingRunTime = getRunTime(start, end)
 
@@ -211,7 +211,10 @@ if __name__ == '__main__':
     methodNames = ['BF', 'cvBF', 'FLANN']
     methodName = "cvBF"
 
+    # 54
     minHamming_prefilter = 60
+    maxHamming_postfilter = 48
+    maxRatio_postfilter = 0.7
 
     # 1
     runMethod('BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
@@ -234,29 +237,35 @@ if __name__ == '__main__':
               outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=False, postFilterRatio=False))
 
     # 4
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=75, postFilterRatio=False,
-              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=75, postFilterRatio=False))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
 
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=75, postFilterRatio=False,
-              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=75, postFilterRatio=False))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
     # 5
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=True, postFilterHamming=75, postFilterRatio=False,
-              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=True, postFilterHamming=75, postFilterRatio=False))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
 
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=75, postFilterRatio=False,
-              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=75, postFilterRatio=False))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
     # 6
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7,
-              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
 
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7,
-              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
     # 7
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7,
-              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter))
 
-    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7,
-              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7))
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter))
+    # FLANN
+    runMethod('FLANN', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
+              outputName=makeMethodName('FLANN', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
+
+    runMethod('FLANN', name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
+              outputName=makeMethodName('FLANN', prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
 
     headers = ["Referenciakép neve", "Előszűrés küszöbértéke", "Detektált pontok száma", "Szűrt pontok száma",
                "Perspektív kép neve", "Detektált pontok száma perspektív képen", "Detektálás futási ideje (ms)",
