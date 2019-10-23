@@ -11,10 +11,9 @@ import postfilter
 
 mydata = []
 
-numberOfKeypoint = 500
+numberOfKeypoint = 1000
 numberOfCirclePointPerSector = 3
 max_correct_radius = 5
-minHamming_prefilter = 60
 maxHamming_postfilter = 75
 maxRatio_postfilter = 0.5
 
@@ -107,11 +106,11 @@ def addTableRow(path_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyP
                 detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
                 foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime):
     mydata.append([path_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, path_perspective, numberOfPerspectiveKeyPoint,
-                  detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
-                  foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime])
+                   detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
+                   foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime])
 
 
-def runMethod(name_ref, name_perspective, prefilterValue, crossCheck, postFilterHamming, postFilterRatio, outputName):
+def runMethod(method_name, name_ref, name_perspective, prefilterValue, crossCheck, postFilterHamming, postFilterRatio, outputName):
     path_ref = '../images/' + name_ref + '.jpg'
     path_perspective = '../images/' + name_perspective + '.jpg'
 
@@ -149,7 +148,10 @@ def runMethod(name_ref, name_perspective, prefilterValue, crossCheck, postFilter
         numberOfFilteredKeyPoints = '-'
 
     start = time.time()
-    matches = im.openCVBF(kp_ref, des_ref, kp_perspective, des_perspective, crossCheck=crossCheck)
+    if method_name == 'cvBF':
+        matches = im.openCVBF(kp_ref, des_ref, kp_perspective, des_perspective, crossCheck=crossCheck)
+    elif method_name == 'BF':
+        matches = im.BF(kp_ref, des_ref, kp_perspective, des_perspective)
     end = time.time()
     matchingRunTime = getRunTime(start, end)
 
@@ -176,20 +178,85 @@ def runMethod(name_ref, name_perspective, prefilterValue, crossCheck, postFilter
                 str(numberOfInliers / foundMatches * 100), matchingRunTime)
 
 
+def makeMethodName(nameMethod, prefilterValue, crossCheck, postFilterHamming, postFilterRatio):
+    s = [nameMethod]
+    if prefilterValue:
+        s.append("prefilter")
+    else:
+        s.append("noprefilter")
+
+    if crossCheck:
+        s.append("check")
+    else:
+        s.append("nocheck")
+
+    if postFilterHamming:
+        s.append("hamming")
+    else:
+        s.append("nohamming")
+
+    if postFilterRatio:
+        s.append("ratio")
+    else:
+        s.append("noratio")
+
+    return '_'.join(s)
+
+
 if __name__ == '__main__':
-    name_ref = "darts1_2"
+    name_ref = "darts1_1"
+    name_perspectives = []
+    name_perspective = "darts2_1"
 
-    name_perspective = "darts2_2"
+    methodNames = ['BF', 'cvBF', 'FLANN']
+    methodName = "cvBF"
 
-    runMethod(name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False, outputName="cvBF_noprefilter_nocheck_nohamming_noratio")
-    runMethod(name_ref, name_perspective, prefilterValue=65, crossCheck=False, postFilterHamming=False, postFilterRatio=False, outputName="cvBF_prefilter_nocheck_nohamming_noratio")
+    minHamming_prefilter = 60
 
-    # mydata = [(
-    #     path_ref, "-", str(numberOfKeypoint), "-", path_perspective, str(numberOfKeypoint), detectRunTime,
-    #     outputName, crossCheck, "-", "-", foundMatches, str(foundMatches / numberOfKeypoint * 100),
-    #     numberOfInliers, str(numberOfInliers / foundMatches * 100), matchingRunTime)]
+    # 1
+    runMethod('BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+              outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
 
+    runMethod('BF', name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+              outputName=makeMethodName('BF', prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
+    # 2
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
 
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
+
+    # 3
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=True, postFilterHamming=False, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=True, postFilterHamming=False, postFilterRatio=False))
+
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=False, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=False, postFilterRatio=False))
+
+    # 4
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=75, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=75, postFilterRatio=False))
+
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=75, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=75, postFilterRatio=False))
+    # 5
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=True, postFilterHamming=75, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=True, postFilterHamming=75, postFilterRatio=False))
+
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=75, postFilterRatio=False,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=75, postFilterRatio=False))
+    # 6
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7))
+
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=0.7))
+    # 7
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7,
+              outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7))
+
+    runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7,
+              outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=48, postFilterRatio=0.7))
 
     headers = ["Referenciakép neve", "Előszűrés küszöbértéke", "Detektált pontok száma", "Szűrt pontok száma",
                "Perspektív kép neve", "Detektált pontok száma perspektív képen", "Detektálás futási ideje (ms)",
@@ -198,5 +265,8 @@ if __name__ == '__main__':
                "Párkeresés futási ideje (ms)"]
 
     print(tabulate(mydata, headers=headers))
+
+    with open("output/image_matcher_eval.txt", 'w', encoding='utf-8') as f:
+        f.write(tabulate(mydata, headers=headers))
 
     cv2.waitKey(0)

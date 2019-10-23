@@ -1,11 +1,12 @@
 import numpy as np
+from cv2.cv2 import DMatch
 
 
 def bruteForce(kpReference, desReference, kpPerspective, desPerspective):
     des_reference_bitstring_array = uint8ArrayToBitstring(desReference)
     des_perspective_bitstring_array = uint8ArrayToBitstring(desPerspective)
     sorted_hamming_distance_array = makeAllHammingDistance(des_reference_bitstring_array, des_perspective_bitstring_array)
-    firstTwo = [(i[0], i[1]) for i in sorted_hamming_distance_array]
+    firstTwo = [[DMatch(_queryIdx=index, _trainIdx=i[0][0], _imgIdx=0, _distance=i[0][1]), DMatch(_queryIdx=index, _trainIdx=i[1][0], _imgIdx=0, _distance=i[1][1])] for index, i in enumerate(sorted_hamming_distance_array)]
 
     return firstTwo
 
