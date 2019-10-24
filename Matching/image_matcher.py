@@ -1,9 +1,9 @@
 import cv2
-import ownBF
+import myBF
 
 
 def BF(kp_ref, des_ref, kp_perspective, des_perspective):
-    firstTwoArray = ownBF.bruteForce(kp_ref, des_ref, kp_perspective, des_perspective)
+    firstTwoArray = myBF.bruteForce(kp_ref, des_ref, kp_perspective, des_perspective)
     return firstTwoArray
 
 

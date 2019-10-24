@@ -4,7 +4,7 @@ import sys
 import os
 
 mouseClicks = []
-imagePath = '../images/darts1_1.jpg'
+imagePath = '../images/darts_felul.jpg'
 deleteSquareSide = 3
 
 
