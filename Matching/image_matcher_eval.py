@@ -19,7 +19,7 @@ max_correct_radius = 5
 
 
 def getRunTime(start, end):
-    return str(end - start)
+    return str(round((end - start) * 1000, 2))
 
 
 def calcDistance(point1, point2):
@@ -50,28 +50,26 @@ def Project(points, homography_matrix):
 
 
 def getMatchesPointWithHomography(kp_ref, matches, homography_matrix):
+    # points = [(index, kp_ref[match[0].queryIdx].pt) for index, match in enumerate(matches)]
     points = [kp_ref[match[0].queryIdx].pt for match in matches]
     return Project(points, homography_matrix)
 
 
-def evaluate(img, matches, kp_perspective, truth_points, outputFolderName):
-    goodMatches = []
-    badMatches = []
-    points = [kp_perspective[match[0].trainIdx].pt for match in matches]
+def evaluate(matches, kp_perspective, truth_points):
+    inliers_match_index = []
+    outliers_match_index = []
 
-    for i in range(0, len(points)):
-        d = calcDistance(points[i], truth_points[i])
+    for index, match in enumerate(matches):
+        d = calcDistance(kp_perspective[match[0].trainIdx].pt, truth_points[index])
         if d <= max_correct_radius:
-            goodMatches.append(i)
+            inliers_match_index.append(index)
         else:
-            badMatches.append(i)
+            outliers_match_index.append(index)
 
-    drawInlierOutlierPoints(img, kp_perspective, truth_points, goodMatches, badMatches, outputFolderName)
-
-    return len(goodMatches), len(badMatches)
+    return inliers_match_index, outliers_match_index
 
 
-def drawInlierOutlierPoints(img, kp, truth_points, inliers, outliers, outputFolderName, isGray=True):
+def drawGT(img, click_point_ref, homography_matrix_ground_truth, outputFolderName, isGray=True):
     if isGray:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -79,17 +77,82 @@ def drawInlierOutlierPoints(img, kp, truth_points, inliers, outliers, outputFold
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    for i in outliers:
-        bad_point = (int(kp[i].pt[0]), int(kp[i].pt[1]))
-        good_point = (int(truth_points[i][0]), int(truth_points[i][1]))
-        img = cv2.circle(img, bad_point, 3, (0, 0, 255), thickness=-1)
-        img = cv2.circle(img, good_point, 3, (0, 255, 255), thickness=-1)
-        # img = cv2.line(img, bad_point, good_point, (255, 0, 0), thickness=2)
+    projected_click_point_ref = Project(click_point_ref, homography_matrix_ground_truth)
 
-    for i in inliers:
-        img = cv2.circle(img, (int(kp[i].pt[0]), int(kp[i].pt[1])), int(kp[i].size / 2), (0, 255, 0), thickness=1)
+    for point in projected_click_point_ref:
+        img = cv2.circle(img, (int(point[0]), int(point[1])), 2, (0, 255, 0), thickness=-1)
 
-    cv2.imwrite(directory + '/' + name_perspective + '.jpg', img)
+    cv2.imwrite(directory + '/gt_' + name_perspective + '.jpg', img)
+
+
+def drawOrb(img, kp_perspective, outputFolderName, isGray=True):
+    if isGray:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    directory = "output/" + outputFolderName
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    for kp in kp_perspective:
+        img = cv2.circle(img, (int(kp.pt[0]), int(kp.pt[1])), 2, (0, 255, 0), thickness=-1)
+
+    cv2.imwrite(directory + '/orb_' + name_perspective + '.jpg', img)
+
+
+def drawMatched(img, truth_points, outputFolderName, isGray=True):
+    if isGray:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    directory = "output/" + outputFolderName
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    for point in truth_points:
+        img = cv2.circle(img, (int(point[0]), int(point[1])), 2, (0, 255, 0), thickness=-1)
+
+    cv2.imwrite(directory + '/matched_' + name_perspective + '.jpg', img)
+
+
+def drawMatching(img, kp_ref, kp_perspective, matches, inliers_match_index, outputFolderName, isGray=True):
+    if isGray:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    directory = "output/" + outputFolderName
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    for i in inliers_match_index:
+        point1 = kp_ref[matches[i][0].queryIdx].pt
+        point2 = kp_perspective[matches[i][0].trainIdx].pt
+        img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (0, 255, 0), thickness=-1)
+        img = cv2.circle(img, (int(point2[0]), int(point2[1])), 2, (0, 255, 0), thickness=-1)
+
+        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0, 255, 0), thickness=2)
+
+    cv2.imwrite(directory + '/matching_' + name_perspective + '.jpg', img)
+
+
+def drawEval(img, kp_perspective, matches, inliers_match_index, outliers_match_index,truth_points, outputFolderName, isGray=True):
+    if isGray:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    directory = "output/" + outputFolderName
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    for i in outliers_match_index:
+        point1 = kp_perspective[matches[i][0].trainIdx].pt
+        point2 = truth_points[i]
+        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (255, 0, 0), thickness=2)
+        img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (255, 0, 0), thickness=-1)
+
+    for i in inliers_match_index:
+        point1 = kp_perspective[matches[i][0].trainIdx].pt
+        point2 = truth_points[i]
+        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0, 255, 255), thickness=2)
+        img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (0, 255, 0), thickness=-1)
+
+    cv2.imwrite(directory + '/eval_' + name_perspective + '.jpg', img)
 
 
 def drawPoints(img, points, name, color=(0, 255, 0), isGray=True):
@@ -102,15 +165,15 @@ def drawPoints(img, points, name, color=(0, 255, 0), isGray=True):
     cv2.imshow(name, img)
 
 
-def addTableRow(path_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, path_perspective, numberOfPerspectiveKeyPoint,
+def addTableRow(methodId, name_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, name_perspective, numberOfPerspectiveKeyPoint,
                 detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
                 foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime):
-    mydata.append([path_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, path_perspective, numberOfPerspectiveKeyPoint,
+    mydata.append([methodId, name_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, name_perspective, numberOfPerspectiveKeyPoint,
                    detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
-                   foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime])
+                   round(foundMatchesPercent, 1), numberOfInliers, round(correctMatchPercent, 1), matchingRunTime])
 
 
-def runMethod(method_name, name_ref, name_perspective, prefilterValue, crossCheck, postFilterHamming, postFilterRatio, outputName):
+def runMethod(methodId, method_name, name_ref, name_perspective, prefilterValue, crossCheck, postFilterHamming, postFilterRatio, outputName):
     path_ref = '../images/' + name_ref + '.jpg'
     path_perspective = '../images/' + name_perspective + '.jpg'
 
@@ -142,10 +205,8 @@ def runMethod(method_name, name_ref, name_perspective, prefilterValue, crossChec
     if prefilterValue:
         minHamming_prefilter = prefilterValue
         kp_ref, des_ref = prefilter.prefilter(kp_ref, des_ref, min_hamming=minHamming_prefilter)
-        numberOfFilteredKeyPoints = numberOfKeypoint - len(kp_ref)
     else:
         minHamming_prefilter = '-'
-        numberOfFilteredKeyPoints = '-'
 
     start = time.time()
     if method_name == 'cvBF':
@@ -170,18 +231,26 @@ def runMethod(method_name, name_ref, name_perspective, prefilterValue, crossChec
         maxRatio_postfilter = '-'
 
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
-    numberOfInliers, numberOfOutliers = evaluate(img_perspective, matches, kp_perspective, truth_points, outputName)
+    inliers_match_index, outliers_match_index = evaluate(matches, kp_perspective, truth_points)
 
+    drawOrb(img_perspective, kp_perspective, outputName)
+    drawGT(img_perspective, click_point_ref, homography_matrix_ground_truth, outputName)
+    drawMatched(img_perspective, truth_points, outputName)
+    drawMatching(img_perspective, kp_ref, kp_perspective, matches, inliers_match_index, outputName)
+    drawEval(img_perspective, kp_perspective, matches, inliers_match_index, outliers_match_index,truth_points, outputName)
+
+    numberOfInliers = len(inliers_match_index)
     foundMatches = len(matches)
+    numberOfFilteredKeyPoints = len(kp_ref)
 
-    addTableRow(path_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, path_perspective,
+    addTableRow(methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
                 numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
-                foundMatches, (foundMatches / numberOfKeypoint * 100), numberOfInliers,
+                foundMatches, (foundMatches / numberOfFilteredKeyPoints * 100), numberOfInliers,
                 (numberOfInliers / foundMatches * 100), matchingRunTime)
 
-    summary.append([path_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, path_perspective,
+    summary.append([methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
                     numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
-                    foundMatches, (foundMatches / numberOfKeypoint * 100), numberOfInliers,
+                    foundMatches, (foundMatches / numberOfFilteredKeyPoints * 100), numberOfInliers,
                     (numberOfInliers / foundMatches * 100), matchingRunTime])
 
 
@@ -210,29 +279,26 @@ def makeMethodName(nameMethod, prefilterValue, crossCheck, postFilterHamming, po
     return '_'.join(s)
 
 
-def addSummaryRow(minHamming_prefilter):
-    if minHamming_prefilter:
-        meanFilteredKeyPoints = statistics.mean([float(i[3]) for i in summary])
-    else:
-        meanFilteredKeyPoints = '-'
-
-    addTableRow(summary[0][0], summary[0][1], summary[0][2], meanFilteredKeyPoints, "Összesítés",
-                summary[0][5], statistics.mean([float(i[6]) for i in summary]), summary[0][7], summary[0][8], summary[0][9], summary[0][10],
-                statistics.mean([int(i[11]) for i in summary]), statistics.mean([float(i[12]) for i in summary]), statistics.mean([float(i[13]) for i in summary]),
-                statistics.mean([float(i[14]) for i in summary]), statistics.mean([float(i[15]) for i in summary]))
+def addSummaryRow():
+    addTableRow(summary[0][0], summary[0][1], summary[0][2], summary[0][3], round(statistics.mean([float(i[4]) for i in summary]), 2), "Average",
+                summary[0][6], round(statistics.mean([float(i[7]) for i in summary]), 2), summary[0][8], summary[0][9], summary[0][10], summary[0][11],
+                round(statistics.mean([int(i[12]) for i in summary]), 2), round(statistics.mean([float(i[13]) for i in summary]), 1), round(statistics.mean([float(i[14]) for i in summary]), 2),
+                round(statistics.mean([float(i[15]) for i in summary]), 1), round(statistics.mean([float(i[16]) for i in summary]), 2))
 
 
 if __name__ == '__main__':
+    methodId = 1
     name_ref = "darts1_1"
 
     name_perspectives = ['darts2_1', 'darts_alul', 'darts_bal', 'darts_felul', 'darts_jobb']
-    # minHamming_prefilters = [False, 50, 60, 70]
-    minHamming_prefilters = [False, 70]
-    # maxHamming_postfilters = [False, 48, 53, 58]
-    maxHamming_postfilters = [False, 53]
+    # name_perspectives = ['darts2_1']
+    minHamming_prefilters = [False, 45, 50, 55]
+    # minHamming_prefilters = [50]
+    maxHamming_postfilters = [False, 60, 80, 100]
+    # maxHamming_postfilters = [False]
     cross_Checks = [True, False]
-    # maxRatio_postfilters = [False, 0.6, 0.7, 0.8]
-    maxRatio_postfilters = [False, 0.7]
+    maxRatio_postfilters = [False, 0.6, 0.7, 0.8]
+    # maxRatio_postfilters = [False]
     methodNames = ['cvBF', 'FLANN']
 
     # name_perspective = "darts2_1"
@@ -243,12 +309,13 @@ if __name__ == '__main__':
     # methodName = "cvBF"
 
     for name_perspective in name_perspectives:
-        runMethod('BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+        runMethod(methodId, 'BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
                   outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
         print(makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False) + '_' + name_perspective)
         if len(summary) == len(name_perspectives):
             addSummaryRow(False)
             summary.clear()
+            methodId += 1
 
     for methodName in methodNames:
         for maxRatio_postfilter in maxRatio_postfilters:
@@ -258,70 +325,26 @@ if __name__ == '__main__':
                 for maxHamming_postfilter in maxHamming_postfilters:
                     for minHamming_prefilter in minHamming_prefilters:
                         for name_perspective in name_perspectives:
-                            runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter,
+                            runMethod(methodId, methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter,
                                       outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter))
                             print(makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter) + '_' + name_perspective)
 
                             if len(summary) == len(name_perspectives):
                                 addSummaryRow(minHamming_prefilter)
                                 summary.clear()
+                                methodId += 1
 
-    # # 1
-    # runMethod('BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
-    #           outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
-    #
-    # runMethod('BF', name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
-    #           outputName=makeMethodName('BF', prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
-    # # 2
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
-    #
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
-    #
-    # # 3
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=True, postFilterHamming=False, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=True, postFilterHamming=False, postFilterRatio=False))
-    #
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=False, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=False, postFilterRatio=False))
-    #
-    # # 4
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
-    #
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
-    # # 5
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
-    #
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False,
-    #           outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=True, postFilterHamming=maxHamming_postfilter, postFilterRatio=False))
-    # # 6
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
-    #           outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
-    #
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
-    #           outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
-    # # 7
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter,
-    #           outputName=makeMethodName(methodName, prefilterValue=False, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter))
-    #
-    # runMethod(methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter,
-    #           outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter))
-    # # FLANN
-    # runMethod('FLANN', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
-    #           outputName=makeMethodName('FLANN', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
-    #
-    # runMethod('FLANN', name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter,
-    #           outputName=makeMethodName('FLANN', prefilterValue=minHamming_prefilter, crossCheck=False, postFilterHamming=False, postFilterRatio=maxRatio_postfilter))
+    # headers = ["Referenciakép neve", "Előszűrés küszöbértéke", "Detektált pontok száma", "Szűrt pontok száma",
+    #            "Perspektív kép neve", "Detektált pontok száma perspektív képen", "Detektálás futási ideje (ms)",
+    #            "Párkeresési módszer", "Cross check", "Távolság utószűrés paramétere", "Arány utószűrés paramétere",
+    #            "Megtalált párok száma", "Párosított pontok %-a", "Helyes párok száma", "Helyes párok %-a",
+    #            "Párkeresés futási ideje (ms)"]
 
-    headers = ["Referenciakép neve", "Előszűrés küszöbértéke", "Detektált pontok száma", "Szűrt pontok száma",
-               "Perspektív kép neve", "Detektált pontok száma perspektív képen", "Detektálás futási ideje (ms)",
-               "Párkeresési módszer", "Cross check", "Távolság utószűrés paramétere", "Arány utószűrés paramétere",
-               "Megtalált párok száma", "Párosított pontok %-a", "Helyes párok száma", "Helyes párok %-a",
-               "Párkeresés futási ideje (ms)"]
+    headers = ["Id", "Image", "Prefilt", "#Detected", "#Filt",
+               "Image", "#Detected", "Det(ms)",
+               "Method", "Cross", "Max.Dist.", "Max.Ratio",
+               "#Matches", "%Matches", "#Correct", "%Correct",
+               "Match(ms)"]
 
     print(tabulate(mydata, headers=headers))
 
