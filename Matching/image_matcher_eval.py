@@ -132,7 +132,7 @@ def drawMatching(img, kp_ref, kp_perspective, matches, inliers_match_index, outp
     cv2.imwrite(directory + '/matching_' + name_perspective + '.jpg', img)
 
 
-def drawEval(img, kp_perspective, matches, inliers_match_index, outliers_match_index,truth_points, outputFolderName, isGray=True):
+def drawEval(img, kp_perspective, matches, inliers_match_index, outliers_match_index, truth_points, outputFolderName, isGray=True):
     if isGray:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -233,25 +233,36 @@ def runMethod(methodId, method_name, name_ref, name_perspective, prefilterValue,
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
     inliers_match_index, outliers_match_index = evaluate(matches, kp_perspective, truth_points)
 
-    drawOrb(img_perspective, kp_perspective, outputName)
-    drawGT(img_perspective, click_point_ref, homography_matrix_ground_truth, outputName)
-    drawMatched(img_perspective, truth_points, outputName)
-    drawMatching(img_perspective, kp_ref, kp_perspective, matches, inliers_match_index, outputName)
-    drawEval(img_perspective, kp_perspective, matches, inliers_match_index, outliers_match_index,truth_points, outputName)
+    # drawOrb(img_perspective, kp_perspective, outputName)
+    # drawGT(img_perspective, click_point_ref, homography_matrix_ground_truth, outputName)
+    # drawMatched(img_perspective, truth_points, outputName)
+    # drawMatching(img_perspective, kp_ref, kp_perspective, matches, inliers_match_index, outputName)
+    # drawEval(img_perspective, kp_perspective, matches, inliers_match_index, outliers_match_index,truth_points, outputName)
 
     numberOfInliers = len(inliers_match_index)
     foundMatches = len(matches)
     numberOfFilteredKeyPoints = len(kp_ref)
 
-    addTableRow(methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
-                numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
-                foundMatches, (foundMatches / numberOfFilteredKeyPoints * 100), numberOfInliers,
-                (numberOfInliers / foundMatches * 100), matchingRunTime)
+    if numberOfFilteredKeyPoints != 0:
+        foundMatchesPercent = (foundMatches / numberOfFilteredKeyPoints * 100)
+    else:
+        foundMatchesPercent = 0
+
+    if foundMatches != 0:
+        numberOfInliersPercent = (numberOfInliers / foundMatches * 100)
+    else:
+        numberOfInliersPercent = 0
+
+    # addTableRow(methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
+    #             numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
+    #             foundMatches, (foundMatches / numberOfFilteredKeyPoints * 100), numberOfInliers,
+    #             (numberOfInliers / foundMatches * 100), matchingRunTime)
+
 
     summary.append([methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
                     numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
-                    foundMatches, (foundMatches / numberOfFilteredKeyPoints * 100), numberOfInliers,
-                    (numberOfInliers / foundMatches * 100), matchingRunTime])
+                    foundMatches, foundMatchesPercent, numberOfInliers,
+                    numberOfInliersPercent, matchingRunTime])
 
 
 def makeMethodName(nameMethod, prefilterValue, crossCheck, postFilterHamming, postFilterRatio):
@@ -292,14 +303,14 @@ if __name__ == '__main__':
 
     name_perspectives = ['darts2_1', 'darts_alul', 'darts_bal', 'darts_felul', 'darts_jobb']
     # name_perspectives = ['darts2_1']
-    minHamming_prefilters = [False, 45, 50, 55]
-    # minHamming_prefilters = [50]
-    maxHamming_postfilters = [False, 60, 80, 100]
-    # maxHamming_postfilters = [False]
-    cross_Checks = [True, False]
-    maxRatio_postfilters = [False, 0.6, 0.7, 0.8]
-    # maxRatio_postfilters = [False]
-    methodNames = ['cvBF', 'FLANN']
+    # minHamming_prefilters = [False, 45, 50, 55]
+    minHamming_prefilters = [False]
+    maxHamming_postfilters = [False]
+    # maxHamming_postfilters = range(0, 255, 5)
+    cross_Checks = [False]
+    # maxRatio_postfilters = [False, 0.6, 0.7, 0.8]
+    maxRatio_postfilters = [1.0]
+    methodNames = ['cvBF']
 
     # name_perspective = "darts2_1"
     # minHamming_prefilter = 60
@@ -308,14 +319,14 @@ if __name__ == '__main__':
     # maxRatio_postfilter = 0.7
     # methodName = "cvBF"
 
-    for name_perspective in name_perspectives:
-        runMethod(methodId, 'BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
-                  outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
-        print(makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False) + '_' + name_perspective)
-        if len(summary) == len(name_perspectives):
-            addSummaryRow(False)
-            summary.clear()
-            methodId += 1
+    # for name_perspective in name_perspectives:
+    #     runMethod(methodId, 'BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+    #               outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
+    #     print(makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False) + '_' + name_perspective)
+    #     if len(summary) == len(name_perspectives):
+    #         addSummaryRow()
+    #         summary.clear()
+    #         methodId += 1
 
     for methodName in methodNames:
         for maxRatio_postfilter in maxRatio_postfilters:
@@ -330,7 +341,7 @@ if __name__ == '__main__':
                             print(makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter) + '_' + name_perspective)
 
                             if len(summary) == len(name_perspectives):
-                                addSummaryRow(minHamming_prefilter)
+                                addSummaryRow()
                                 summary.clear()
                                 methodId += 1
 

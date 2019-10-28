@@ -9,6 +9,6 @@ def distanceFilter(matches, maxHamming):
 
 
 def ratioFilter(matches, maxRatio):
-    matches = list(filter(lambda m: m[0].distance / m[1].distance < maxRatio, matches))
+    matches = list(filter(lambda m: m[0].distance / m[1].distance <= maxRatio, matches))
 
     return matches
