@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import image_matcher_eval as ime
+import pandas as pd
 from tabulate import tabulate
 
 if __name__ == '__main__':
@@ -10,12 +11,10 @@ if __name__ == '__main__':
     name_ref = "darts1_1"
 
     name_perspectives = ['darts2_1', 'darts_alul', 'darts_bal', 'darts_felul', 'darts_jobb']
-    minHamming_prefilters = [0, 20, 32, 70]
-    # minHamming_prefilters = [0]
-    maxHamming_postfilters = [35, 40, 255]
-    # maxHamming_postfilters = [40]
-    cross_Checks = [True, False]
-    maxRatio_postfilters = [False]
+    minHamming_prefilters = [False, 20, 50, 70]
+    maxHamming_postfilters = [False]
+    cross_Checks = [False]
+    maxRatio_postfilters = [round(i, 1) for i in np.arange(0.0, 1.01, 0.1)]
     methodNames = ['cvBF']
 
     for methodName in methodNames:
@@ -55,51 +54,48 @@ if __name__ == '__main__':
 
     print(tabulate(data, headers=headers))
 
-    with open("output/CrossCheck.txt", 'w', encoding='utf-8') as f:
+    with open("output/MaxRatio.txt", 'w', encoding='utf-8') as f:
         f.write(tabulate(data, headers=headers))
 
-    cross_Check_False = list(filter(lambda d: not d[9], data))
-    cross_Check_True = list(filter(lambda d: d[9], data))
+    data2 = pd.DataFrame(data, columns=headers)
 
-    x1 = [i[8] for i in cross_Check_True]
-    # x1 = [a[:[i for i, n in enumerate(a) if n == '_'][1]] + '\n' + a[[i for i, n in enumerate(a) if n == '_'][1]:]for a in x1]
-    y1 = [i[14] for i in cross_Check_True]
-    y2 = [i[14] for i in cross_Check_False]
+    x = maxRatio_postfilters
+    y_PreFilterFalse = [data2[data2['Prefilt'] == '-'].groupby('Max.Ratio')['#Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
+    y_PreFilter20 = [data2[data2['Prefilt'] == minHamming_prefilters[1]].groupby('Max.Ratio')['#Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
+    y_PreFilter50 = [data2[data2['Prefilt'] == minHamming_prefilters[2]].groupby('Max.Ratio')['#Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
+    y_PreFilter70 = [data2[data2['Prefilt'] == minHamming_prefilters[3]].groupby('Max.Ratio')['#Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
 
-    N = len(x1)
-    ind = np.arange(N)  # the x locations for the groups
-    width = 0.35  # the width of the bars
+    line_PreFilterFalse = plt.plot(x, y_PreFilterFalse, 'g-', x, y_PreFilterFalse, 'g^')
+    line_PreFilter20 = plt.plot(x, y_PreFilter20, 'b-', x, y_PreFilter20, 'b+')
+    line_PreFilter50 = plt.plot(x, y_PreFilter50, 'r-', x, y_PreFilter50, 'rx')
+    line_PreFilter70 = plt.plot(x, y_PreFilter70, 'y-', x, y_PreFilter70, 'yd')
 
-    fig, ax = plt.subplots()
+    plt.title('Number of correct match')
+    plt.xlabel('Ratio value')
+    plt.ylabel('#Correct')
 
-    p1 = ax.bar(ind, y1, width, bottom=0)
-    p2 = ax.bar(ind + width, y2, width, bottom=0)
+    legends = ['Prefilter: ' + str(i) for i in minHamming_prefilters]
 
-    ax.set_title('Number of correct match')
-    ax.set_xticks(ind + width / 2)
-    ax.set_xticklabels(x1, rotation=45, horizontalalignment="right")
+    plt.legend([line_PreFilterFalse[0], line_PreFilter20[0], line_PreFilter50[0], line_PreFilter70[0]], legends)
 
-    ax.legend((p1[0], p2[0]), ('CrossCheck: True', 'CrossCheck: False'))
-    ax.autoscale_view()
-
-    plt.savefig('output/#CrossCheck.png', bbox_inches="tight")
+    plt.savefig('output/#MaxRatio.png', bbox_inches="tight")
     plt.show()
 
     # ---------------------
-    y1 = [i[15] for i in cross_Check_True]
-    y2 = [i[15] for i in cross_Check_False]
+    y_PreFilterFalse = [data2[data2['Prefilt'] == '-'].groupby('Max.Ratio')['%Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
+    y_PreFilter20 = [data2[data2['Prefilt'] == minHamming_prefilters[1]].groupby('Max.Ratio')['%Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
+    y_PreFilter50 = [data2[data2['Prefilt'] == minHamming_prefilters[2]].groupby('Max.Ratio')['%Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
+    y_PreFilter70 = [data2[data2['Prefilt'] == minHamming_prefilters[3]].groupby('Max.Ratio')['%Correct'].get_group(i).values[0] for i in maxRatio_postfilters]
 
-    fig, ax = plt.subplots()
+    line_PreFilterFalse = plt.plot(x, y_PreFilterFalse, 'g-', x, y_PreFilterFalse, 'g^')
+    line_PreFilter20 = plt.plot(x, y_PreFilter20, 'b-', x, y_PreFilter20, 'b+')
+    line_PreFilter50 = plt.plot(x, y_PreFilter50, 'r-', x, y_PreFilter50, 'rx')
+    line_PreFilter70 = plt.plot(x, y_PreFilter70, 'y-', x, y_PreFilter70, 'yd')
 
-    p1 = ax.bar(ind, y1, width, bottom=0)
-    p2 = ax.bar(ind + width, y2, width, bottom=0)
+    plt.title('Percent of correct match')
+    plt.xlabel('Ratio value')
+    plt.ylabel('%Correct')
+    plt.legend([line_PreFilterFalse[0], line_PreFilter20[0], line_PreFilter50[0], line_PreFilter70[0]], legends)
 
-    ax.set_title('Percent of correct match')
-    ax.set_xticks(ind + width / 2)
-    ax.set_xticklabels(x1, rotation=45, horizontalalignment="right")
-
-    ax.legend((p1[0], p2[0]), ('CrossCheck: True', 'CrossCheck: False'))
-    ax.autoscale_view()
-
-    plt.savefig('output/%CrossCheck.png', bbox_inches="tight")
+    plt.savefig('output/%MaxRatio.png', bbox_inches="tight")
     plt.show()
