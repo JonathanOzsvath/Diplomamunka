@@ -10,9 +10,6 @@ import dart_board
 import prefilter
 import postfilter
 
-mydata = []
-summary = []
-
 numberOfKeypoint = 1000
 numberOfCirclePointPerSector = 3
 max_correct_radius = 5
@@ -127,12 +124,14 @@ def drawMatching(img, kp_ref, kp_perspective, matches, inliers_match_index, outp
         img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (0, 255, 0), thickness=-1)
         img = cv2.circle(img, (int(point2[0]), int(point2[1])), 2, (0, 255, 0), thickness=-1)
 
-        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0, 255, 0), thickness=2)
+        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0, 255, 0),
+                       thickness=2)
 
     cv2.imwrite(directory + '/matching_' + name_perspective + '.jpg', img)
 
 
-def drawEval(img, kp_perspective, matches, inliers_match_index, outliers_match_index, truth_points, outputFolderName, isGray=True):
+def drawEval(img, kp_perspective, matches, inliers_match_index, outliers_match_index, truth_points, outputFolderName,
+             isGray=True):
     if isGray:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -143,13 +142,15 @@ def drawEval(img, kp_perspective, matches, inliers_match_index, outliers_match_i
     for i in outliers_match_index:
         point1 = kp_perspective[matches[i][0].trainIdx].pt
         point2 = truth_points[i]
-        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (255, 0, 0), thickness=2)
+        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (255, 0, 0),
+                       thickness=2)
         img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (255, 0, 0), thickness=-1)
 
     for i in inliers_match_index:
         point1 = kp_perspective[matches[i][0].trainIdx].pt
         point2 = truth_points[i]
-        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0, 255, 255), thickness=2)
+        img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0, 255, 255),
+                       thickness=2)
         img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (0, 255, 0), thickness=-1)
 
     cv2.imwrite(directory + '/eval_' + name_perspective + '.jpg', img)
@@ -165,15 +166,20 @@ def drawPoints(img, points, name, color=(0, 255, 0), isGray=True):
     cv2.imshow(name, img)
 
 
-def addTableRow(methodId, name_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, name_perspective, numberOfPerspectiveKeyPoint,
+def addTableRow(data, methodId, name_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, name_perspective,
+                numberOfPerspectiveKeyPoint,
                 detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
                 foundMatchesPercent, numberOfInliers, correctMatchPercent, matchingRunTime):
-    mydata.append([methodId, name_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, name_perspective, numberOfPerspectiveKeyPoint,
-                   detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
-                   round(foundMatchesPercent, 1), numberOfInliers, round(correctMatchPercent, 1), matchingRunTime])
+    data.append([methodId, name_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, name_perspective,
+                 numberOfPerspectiveKeyPoint,
+                 detectRunTime, methodName, crossCheck, maxHamming_postfilter, maxRatio_postfilter, foundMatches,
+                 round(foundMatchesPercent, 1), numberOfInliers, round(correctMatchPercent, 1), matchingRunTime])
+
+    return data
 
 
-def runMethod(methodId, method_name, name_ref, name_perspective, prefilterValue, crossCheck, postFilterHamming, postFilterRatio, outputName):
+def runMethod(data, summary, methodId, method_name, name_ref, name_perspective, prefilterValue, crossCheck,
+              postFilterHamming, postFilterRatio, outputName, savePictures=False):
     path_ref = '../images/' + name_ref + '.jpg'
     path_perspective = '../images/' + name_perspective + '.jpg'
 
@@ -233,11 +239,13 @@ def runMethod(methodId, method_name, name_ref, name_perspective, prefilterValue,
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
     inliers_match_index, outliers_match_index = evaluate(matches, kp_perspective, truth_points)
 
-    # drawOrb(img_perspective, kp_perspective, outputName)
-    # drawGT(img_perspective, click_point_ref, homography_matrix_ground_truth, outputName)
-    # drawMatched(img_perspective, truth_points, outputName)
-    # drawMatching(img_perspective, kp_ref, kp_perspective, matches, inliers_match_index, outputName)
-    # drawEval(img_perspective, kp_perspective, matches, inliers_match_index, outliers_match_index,truth_points, outputName)
+    if savePictures:
+        drawOrb(img_perspective, kp_perspective, outputName)
+        drawGT(img_perspective, click_point_ref, homography_matrix_ground_truth, outputName)
+        drawMatched(img_perspective, truth_points, outputName)
+        drawMatching(img_perspective, kp_ref, kp_perspective, matches, inliers_match_index, outputName)
+        drawEval(img_perspective, kp_perspective, matches, inliers_match_index, outliers_match_index, truth_points,
+                 outputName)
 
     numberOfInliers = len(inliers_match_index)
     foundMatches = len(matches)
@@ -253,16 +261,20 @@ def runMethod(methodId, method_name, name_ref, name_perspective, prefilterValue,
     else:
         numberOfInliersPercent = 0
 
-    # addTableRow(methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
-    #             numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
-    #             foundMatches, (foundMatches / numberOfFilteredKeyPoints * 100), numberOfInliers,
-    #             (numberOfInliers / foundMatches * 100), matchingRunTime)
+    # data = addTableRow(data, methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints,
+    #                    name_perspective,
+    #                    numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter,
+    #                    maxRatio_postfilter,
+    #                    foundMatches, foundMatchesPercent, numberOfInliers,
+    #                    numberOfInliersPercent, matchingRunTime)
 
+    summary.append(
+        [methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
+         numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
+         foundMatches, foundMatchesPercent, numberOfInliers,
+         numberOfInliersPercent, matchingRunTime])
 
-    summary.append([methodId, name_ref, minHamming_prefilter, numberOfKeypoint, numberOfFilteredKeyPoints, name_perspective,
-                    numberOfKeypoint, detectRunTime, outputName, crossCheck, maxHamming_postfilter, maxRatio_postfilter,
-                    foundMatches, foundMatchesPercent, numberOfInliers,
-                    numberOfInliersPercent, matchingRunTime])
+    return data, summary
 
 
 def makeMethodName(nameMethod, prefilterValue, crossCheck, postFilterHamming, postFilterRatio):
@@ -290,14 +302,22 @@ def makeMethodName(nameMethod, prefilterValue, crossCheck, postFilterHamming, po
     return '_'.join(s)
 
 
-def addSummaryRow():
-    addTableRow(summary[0][0], summary[0][1], summary[0][2], summary[0][3], round(statistics.mean([float(i[4]) for i in summary]), 2), "Average",
-                summary[0][6], round(statistics.mean([float(i[7]) for i in summary]), 2), summary[0][8], summary[0][9], summary[0][10], summary[0][11],
-                round(statistics.mean([int(i[12]) for i in summary]), 2), round(statistics.mean([float(i[13]) for i in summary]), 1), round(statistics.mean([float(i[14]) for i in summary]), 2),
-                round(statistics.mean([float(i[15]) for i in summary]), 1), round(statistics.mean([float(i[16]) for i in summary]), 2))
+def addSummaryRow(data, summary):
+    data = addTableRow(data, summary[0][0], summary[0][1], summary[0][2], summary[0][3],
+                       round(statistics.mean([float(i[4]) for i in summary]), 2), "Average",
+                       summary[0][6], round(statistics.mean([float(i[7]) for i in summary]), 2), summary[0][8],
+                       summary[0][9], summary[0][10], summary[0][11],
+                       round(statistics.mean([int(i[12]) for i in summary]), 2),
+                       round(statistics.mean([float(i[13]) for i in summary]), 1),
+                       round(statistics.mean([float(i[14]) for i in summary]), 2),
+                       round(statistics.mean([float(i[15]) for i in summary]), 1),
+                       round(statistics.mean([float(i[16]) for i in summary]), 2))
+    return data
 
 
 if __name__ == '__main__':
+    data = []
+    summary = []
     methodId = 1
     name_ref = "darts1_1"
 
@@ -310,21 +330,18 @@ if __name__ == '__main__':
     cross_Checks = [False]
     # maxRatio_postfilters = [False, 0.6, 0.7, 0.8]
     maxRatio_postfilters = [1.0]
-    methodNames = ['cvBF']
-
-    # name_perspective = "darts2_1"
-    # minHamming_prefilter = 60
-    # maxHamming_postfilter = 48
-    # cross_Check = False
-    # maxRatio_postfilter = 0.7
-    # methodName = "cvBF"
+    methodNames = ['cvBF', 'FLANN']
 
     # for name_perspective in name_perspectives:
-    #     runMethod(methodId, 'BF', name_ref, name_perspective, prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False,
-    #               outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False))
-    #     print(makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False, postFilterRatio=False) + '_' + name_perspective)
+    #     data, summary = runMethod(data, summary, methodId, 'BF', name_ref, name_perspective, prefilterValue=False,
+    #                               crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+    #                               outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False,
+    #                                                         postFilterHamming=False, postFilterRatio=False),
+    #                               savePictures=True)
+    #     print(makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False,
+    #                          postFilterRatio=False) + '_' + name_perspective)
     #     if len(summary) == len(name_perspectives):
-    #         addSummaryRow()
+    #         data = addSummaryRow(data, summary)
     #         summary.clear()
     #         methodId += 1
 
@@ -336,20 +353,27 @@ if __name__ == '__main__':
                 for maxHamming_postfilter in maxHamming_postfilters:
                     for minHamming_prefilter in minHamming_prefilters:
                         for name_perspective in name_perspectives:
-                            runMethod(methodId, methodName, name_ref, name_perspective, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter,
-                                      outputName=makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter))
-                            print(makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=cross_Check, postFilterHamming=maxHamming_postfilter, postFilterRatio=maxRatio_postfilter) + '_' + name_perspective)
+                            data, summary = runMethod(data=data, summary=summary, methodId=methodId,
+                                                      method_name=methodName, name_ref=name_ref,
+                                                      name_perspective=name_perspective,
+                                                      prefilterValue=minHamming_prefilter, crossCheck=cross_Check,
+                                                      postFilterHamming=maxHamming_postfilter,
+                                                      postFilterRatio=maxRatio_postfilter,
+                                                      outputName=makeMethodName(methodName,
+                                                                                prefilterValue=minHamming_prefilter,
+                                                                                crossCheck=cross_Check,
+                                                                                postFilterHamming=maxHamming_postfilter,
+                                                                                postFilterRatio=maxRatio_postfilter),
+                                                      savePictures=True)
+                            print(
+                                makeMethodName(methodName, prefilterValue=minHamming_prefilter, crossCheck=cross_Check,
+                                               postFilterHamming=maxHamming_postfilter,
+                                               postFilterRatio=maxRatio_postfilter) + '_' + name_perspective)
 
                             if len(summary) == len(name_perspectives):
-                                addSummaryRow()
+                                data = addSummaryRow(data, summary)
                                 summary.clear()
                                 methodId += 1
-
-    # headers = ["Referenciakép neve", "Előszűrés küszöbértéke", "Detektált pontok száma", "Szűrt pontok száma",
-    #            "Perspektív kép neve", "Detektált pontok száma perspektív képen", "Detektálás futási ideje (ms)",
-    #            "Párkeresési módszer", "Cross check", "Távolság utószűrés paramétere", "Arány utószűrés paramétere",
-    #            "Megtalált párok száma", "Párosított pontok %-a", "Helyes párok száma", "Helyes párok %-a",
-    #            "Párkeresés futási ideje (ms)"]
 
     headers = ["Id", "Image", "Prefilt", "#Detected", "#Filt",
                "Image", "#Detected", "Det(ms)",
@@ -357,9 +381,9 @@ if __name__ == '__main__':
                "#Matches", "%Matches", "#Correct", "%Correct",
                "Match(ms)"]
 
-    print(tabulate(mydata, headers=headers))
+    print(tabulate(data, headers=headers))
 
     with open("output/image_matcher_eval.txt", 'w', encoding='utf-8') as f:
-        f.write(tabulate(mydata, headers=headers))
+        f.write(tabulate(data, headers=headers))
 
     cv2.waitKey(0)
