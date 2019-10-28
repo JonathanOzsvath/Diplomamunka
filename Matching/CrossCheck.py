@@ -11,10 +11,10 @@ if __name__ == '__main__':
     name_ref = "darts1_1"
 
     name_perspectives = ['darts2_1', 'darts_alul', 'darts_bal', 'darts_felul', 'darts_jobb']
-    # minHamming_prefilters = [0, 20, 28, 32, 36, 70]
-    minHamming_prefilters = [0, 20]
-    # maxHamming_postfilters = [35, 40, 45, 255]
-    maxHamming_postfilters = [35, 40]
+    minHamming_prefilters = [0, 20, 32, 70]
+    # minHamming_prefilters = [0]
+    maxHamming_postfilters = [35, 40, 255]
+    # maxHamming_postfilters = [40]
     cross_Checks = [True, False]
     maxRatio_postfilters = [False]
     methodNames = ['cvBF']
@@ -59,5 +59,48 @@ if __name__ == '__main__':
     with open("output/CrossCheck.txt", 'w', encoding='utf-8') as f:
         f.write(tabulate(data, headers=headers))
 
-    cross_Check_False = list(filter(lambda d: d[9] == False, data))
-    cross_Check_True = list(filter(lambda d: d[9] == True, data))
+    cross_Check_False = list(filter(lambda d: not d[9], data))
+    cross_Check_True = list(filter(lambda d: d[9], data))
+
+    x1 = [i[8] for i in cross_Check_True]
+    # x1 = [a[:[i for i, n in enumerate(a) if n == '_'][1]] + '\n' + a[[i for i, n in enumerate(a) if n == '_'][1]:]for a in x1]
+    y1 = [i[14] for i in cross_Check_True]
+    y2 = [i[14] for i in cross_Check_False]
+
+    N = len(x1)
+    ind = np.arange(N)  # the x locations for the groups
+    width = 0.35  # the width of the bars
+
+    fig, ax = plt.subplots()
+
+    p1 = ax.bar(ind, y1, width, bottom=0)
+    p2 = ax.bar(ind + width, y2, width, bottom=0)
+
+    ax.set_title('Number of correct match')
+    ax.set_xticks(ind + width / 2)
+    ax.set_xticklabels(x1, rotation=45, horizontalalignment="right")
+
+    ax.legend((p1[0], p2[0]), ('CrossCheck: True', 'CrossCheck: False'))
+    ax.autoscale_view()
+
+    plt.savefig('output/#CrossCheck.png', bbox_inches="tight")
+    plt.show()
+
+    # ---------------------
+    y1 = [i[15] for i in cross_Check_True]
+    y2 = [i[15] for i in cross_Check_False]
+
+    fig, ax = plt.subplots()
+
+    p1 = ax.bar(ind, y1, width, bottom=0)
+    p2 = ax.bar(ind + width, y2, width, bottom=0)
+
+    ax.set_title('Percent of correct match')
+    ax.set_xticks(ind + width / 2)
+    ax.set_xticklabels(x1, rotation=45, horizontalalignment="right")
+
+    ax.legend((p1[0], p2[0]), ('CrossCheck: True', 'CrossCheck: False'))
+    ax.autoscale_view()
+
+    plt.savefig('output/%CrossCheck.png', bbox_inches="tight")
+    plt.show()
