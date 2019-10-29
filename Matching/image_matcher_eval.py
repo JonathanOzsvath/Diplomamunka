@@ -211,6 +211,8 @@ def runMethod(data, summary, methodId, method_name, name_ref, name_perspective, 
     if prefilterValue:
         minHamming_prefilter = prefilterValue
         kp_ref, des_ref = prefilter.prefilter(kp_ref, des_ref, min_hamming=minHamming_prefilter)
+    elif str(prefilterValue) == str(0):
+        minHamming_prefilter = 0
     else:
         minHamming_prefilter = '-'
 
@@ -228,6 +230,7 @@ def runMethod(data, summary, methodId, method_name, name_ref, name_perspective, 
         maxHamming_postfilter = postFilterHamming
         matches = postfilter.distanceFilter(matches, maxHamming=maxHamming_postfilter)
     elif str(postFilterHamming) == str(0):
+        matches = []
         maxHamming_postfilter = 0
     else:
         maxHamming_postfilter = '-'

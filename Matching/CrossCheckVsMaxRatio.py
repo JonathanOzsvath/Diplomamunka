@@ -11,10 +11,10 @@ if __name__ == '__main__':
     name_ref = "darts1_1"
 
     name_perspectives = ['darts2_1', 'darts_alul', 'darts_bal', 'darts_felul', 'darts_jobb']
-    minHamming_prefilters = range(0, 256, 5)
+    minHamming_prefilters = [False]
     maxHamming_postfilters = [False]
-    cross_Checks = [False]
-    maxRatio_postfilters = [False]
+    cross_Checks = [True, False]
+    maxRatio_postfilters = [False] + [round(i, 1) for i in np.arange(0.1, 1.01, 0.1)]
     methodNames = ['cvBF']
 
     for methodName in methodNames:
@@ -54,28 +54,29 @@ if __name__ == '__main__':
 
     print(tabulate(data, headers=headers))
 
-    with open("output/PrefilterPlot.txt", 'w', encoding='utf-8') as f:
+    with open("output/CrossCheckVsMaxRatio.txt", 'w', encoding='utf-8') as f:
         f.write(tabulate(data, headers=headers))
 
-    x = minHamming_prefilters
+    N = len(data)
+    x = range(0, N)
+    x_labels = [i[8] for i in data]
     y = [i[14] for i in data]
-    line = plt.plot(x, y, 'g-', x, y, 'g^')
 
+    plt.bar(x, y)
     plt.title('Number of correct match')
-    plt.xlabel('Prefilter value')
+    plt.xticks(x, x_labels, rotation=45, horizontalalignment="right")
     plt.ylabel('#Correct')
 
-    plt.savefig('output/#PrefilterPlot.png', bbox_inches="tight")
+    plt.savefig('output/#CrossCheckVsMaxRatio.png', bbox_inches="tight")
     plt.show()
 
     # ---------------------
     y = [i[15] for i in data]
 
-    line = plt.plot(x, y, 'g-', x, y, 'g^')
-
+    plt.bar(x, y)
     plt.title('Percent of correct match')
-    plt.xlabel('Prefilter value')
+    plt.xticks(x, x_labels, rotation=45, horizontalalignment="right")
     plt.ylabel('%Correct')
 
-    plt.savefig('output/%PrefilterPlot.png', bbox_inches="tight")
+    plt.savefig('output/%CrossCheckVsMaxRatio.png', bbox_inches="tight")
     plt.show()

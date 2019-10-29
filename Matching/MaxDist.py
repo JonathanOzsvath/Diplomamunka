@@ -11,8 +11,8 @@ if __name__ == '__main__':
     name_ref = "darts1_1"
 
     name_perspectives = ['darts2_1', 'darts_alul', 'darts_bal', 'darts_felul', 'darts_jobb']
-    minHamming_prefilters = range(0, 256, 5)
-    maxHamming_postfilters = [False]
+    minHamming_prefilters = [False, 20, 50, 70]
+    maxHamming_postfilters = range(0, 256, 5)
     cross_Checks = [False]
     maxRatio_postfilters = [False]
     methodNames = ['cvBF']
@@ -54,28 +54,48 @@ if __name__ == '__main__':
 
     print(tabulate(data, headers=headers))
 
-    with open("output/PrefilterPlot.txt", 'w', encoding='utf-8') as f:
+    with open("output/MaxDist.txt", 'w', encoding='utf-8') as f:
         f.write(tabulate(data, headers=headers))
 
-    x = minHamming_prefilters
-    y = [i[14] for i in data]
-    line = plt.plot(x, y, 'g-', x, y, 'g^')
+    data2 = pd.DataFrame(data, columns=headers)
+
+    x = maxHamming_postfilters
+    y_PreFilterFalse = [data2[data2['Prefilt'] == '-'].groupby('Max.Dist.')['#Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
+    y_PreFilter20 = [data2[data2['Prefilt'] == minHamming_prefilters[1]].groupby('Max.Dist.')['#Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
+    y_PreFilter50 = [data2[data2['Prefilt'] == minHamming_prefilters[2]].groupby('Max.Dist.')['#Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
+    y_PreFilter70 = [data2[data2['Prefilt'] == minHamming_prefilters[3]].groupby('Max.Dist.')['#Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
+
+    line_PreFilterFalse = plt.plot(x, y_PreFilterFalse, 'g-', x, y_PreFilterFalse, 'g^')
+    line_PreFilter20 = plt.plot(x, y_PreFilter20, 'b-', x, y_PreFilter20, 'b+')
+    line_PreFilter50 = plt.plot(x, y_PreFilter50, 'r-', x, y_PreFilter50, 'rx')
+    line_PreFilter70 = plt.plot(x, y_PreFilter70, 'y-', x, y_PreFilter70, 'yd')
 
     plt.title('Number of correct match')
-    plt.xlabel('Prefilter value')
+    plt.xlabel('Distance value')
     plt.ylabel('#Correct')
 
-    plt.savefig('output/#PrefilterPlot.png', bbox_inches="tight")
+    legends = ['Prefilter: ' + str(i) for i in minHamming_prefilters]
+
+    plt.legend([line_PreFilterFalse[0], line_PreFilter20[0], line_PreFilter50[0], line_PreFilter70[0]], legends)
+
+    plt.savefig('output/#MaxDist.png', bbox_inches="tight")
     plt.show()
 
     # ---------------------
-    y = [i[15] for i in data]
+    y_PreFilterFalse = [data2[data2['Prefilt'] == '-'].groupby('Max.Dist.')['%Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
+    y_PreFilter20 = [data2[data2['Prefilt'] == minHamming_prefilters[1]].groupby('Max.Dist.')['%Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
+    y_PreFilter50 = [data2[data2['Prefilt'] == minHamming_prefilters[2]].groupby('Max.Dist.')['%Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
+    y_PreFilter70 = [data2[data2['Prefilt'] == minHamming_prefilters[3]].groupby('Max.Dist.')['%Correct'].get_group(i).values[0] for i in maxHamming_postfilters]
 
-    line = plt.plot(x, y, 'g-', x, y, 'g^')
+    line_PreFilterFalse = plt.plot(x, y_PreFilterFalse, 'g-', x, y_PreFilterFalse, 'g^')
+    line_PreFilter20 = plt.plot(x, y_PreFilter20, 'b-', x, y_PreFilter20, 'b+')
+    line_PreFilter50 = plt.plot(x, y_PreFilter50, 'r-', x, y_PreFilter50, 'rx')
+    line_PreFilter70 = plt.plot(x, y_PreFilter70, 'y-', x, y_PreFilter70, 'yd')
 
     plt.title('Percent of correct match')
-    plt.xlabel('Prefilter value')
+    plt.xlabel('Distance value')
     plt.ylabel('%Correct')
+    plt.legend([line_PreFilterFalse[0], line_PreFilter20[0], line_PreFilter50[0], line_PreFilter70[0]], legends)
 
-    plt.savefig('output/%PrefilterPlot.png', bbox_inches="tight")
+    plt.savefig('output/%MaxDist.png', bbox_inches="tight")
     plt.show()
