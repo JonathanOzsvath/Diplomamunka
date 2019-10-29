@@ -227,17 +227,18 @@ def runMethod(data, summary, methodId, method_name, name_ref, name_perspective, 
     if postFilterHamming:
         maxHamming_postfilter = postFilterHamming
         matches = postfilter.distanceFilter(matches, maxHamming=maxHamming_postfilter)
+    elif str(postFilterHamming) == str(0):
+        maxHamming_postfilter = 0
     else:
         maxHamming_postfilter = '-'
 
     if postFilterRatio:
         maxRatio_postfilter = postFilterRatio
         matches = postfilter.ratioFilter(matches, maxRatio=maxRatio_postfilter)
-    elif postFilterRatio == 0.0:
+    elif str(postFilterRatio) == str(0.0):
         matches = []
         maxRatio_postfilter = 0.0
     else:
-        matches = []
         maxRatio_postfilter = '-'
 
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
@@ -300,7 +301,7 @@ def makeMethodName(nameMethod, prefilterValue, crossCheck, postFilterHamming, po
 
     if postFilterRatio:
         s.append(str(postFilterRatio))
-    elif postFilterRatio == 0.0:
+    elif str(postFilterRatio) == str(0.0):
         s.append('0.0')
     else:
         s.append("noratio")
