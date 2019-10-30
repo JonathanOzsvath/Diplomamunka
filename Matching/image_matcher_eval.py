@@ -47,8 +47,7 @@ def Project(points, homography_matrix):
 
 
 def getMatchesPointWithHomography(kp_ref, matches, homography_matrix):
-    # points = [(index, kp_ref[match[0].queryIdx].pt) for index, match in enumerate(matches)]
-    points = [kp_ref[match[0].queryIdx].pt for match in matches]
+    points = [kp_ref[match.queryIdx].pt for match in matches]
     return Project(points, homography_matrix)
 
 
@@ -57,7 +56,7 @@ def evaluate(matches, kp_perspective, truth_points):
     outliers_match_index = []
 
     for index, match in enumerate(matches):
-        d = calcDistance(kp_perspective[match[0].trainIdx].pt, truth_points[index])
+        d = calcDistance(kp_perspective[match.trainIdx].pt, truth_points[index])
         if d <= max_correct_radius:
             inliers_match_index.append(index)
         else:
@@ -119,8 +118,8 @@ def drawMatching(img, kp_ref, kp_perspective, matches, inliers_match_index, outp
         os.makedirs(directory)
 
     for i in inliers_match_index:
-        point1 = kp_ref[matches[i][0].queryIdx].pt
-        point2 = kp_perspective[matches[i][0].trainIdx].pt
+        point1 = kp_ref[matches[i].queryIdx].pt
+        point2 = kp_perspective[matches[i].trainIdx].pt
         img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (0, 255, 0), thickness=-1)
         img = cv2.circle(img, (int(point2[0]), int(point2[1])), 2, (0, 255, 0), thickness=-1)
 
@@ -140,14 +139,14 @@ def drawEval(img, kp_perspective, matches, inliers_match_index, outliers_match_i
         os.makedirs(directory)
 
     for i in outliers_match_index:
-        point1 = kp_perspective[matches[i][0].trainIdx].pt
+        point1 = kp_perspective[matches[i].trainIdx].pt
         point2 = truth_points[i]
         img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (255, 0, 0),
                        thickness=2)
         img = cv2.circle(img, (int(point1[0]), int(point1[1])), 2, (255, 0, 0), thickness=-1)
 
     for i in inliers_match_index:
-        point1 = kp_perspective[matches[i][0].trainIdx].pt
+        point1 = kp_perspective[matches[i].trainIdx].pt
         point2 = truth_points[i]
         img = cv2.line(img, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0, 255, 255),
                        thickness=2)
@@ -243,6 +242,8 @@ def runMethod(data, summary, methodId, method_name, name_ref, name_perspective, 
         maxRatio_postfilter = 0.0
     else:
         maxRatio_postfilter = '-'
+
+    matches = [m for m, n in matches]
 
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
     inliers_match_index, outliers_match_index = evaluate(matches, kp_perspective, truth_points)

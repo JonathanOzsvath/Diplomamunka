@@ -14,14 +14,7 @@ numberOfKeypoint = 1000
 minHamming_prefilter = 20
 
 
-def ransac(kp_ref, des_ref, img_perspective, numberOfKeypoint=1000, max_correct_radius=5.0, min_match_count=10):
-    orb = cv2.ORB_create(numberOfKeypoint)
-    kp_perspective, des_perspective = orb.detectAndCompute(img_perspective, None)
-
-    matches = im.openCVBF(kp_ref, des_ref, kp_perspective, des_perspective, crossCheck=False)
-    matches = postfilter.ratioFilter(matches, maxRatio=0.8)
-
-    matches = [m for m, n in matches]
+def ransac(kp_ref, kp_perspective, matches, max_correct_radius=5.0, min_match_count=10):
 
     if len(matches) > min_match_count:
         src_pts = np.float32([kp_ref[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
@@ -35,7 +28,7 @@ def ransac(kp_ref, des_ref, img_perspective, numberOfKeypoint=1000, max_correct_
         mask = False
         print("Not enough matches are found - %d/%d".format(len(matches), min_match_count))
 
-    return homography, mask, kp_perspective, des_perspective, matches
+    return homography, mask
 
 
 if __name__ == '__main__':
@@ -55,10 +48,14 @@ if __name__ == '__main__':
 
     orb = cv2.ORB_create(numberOfKeypoint)
     kp_ref, des_ref = orb.detectAndCompute(img_ref, None)
-
     kp_ref, des_ref = prefilter.prefilter(kp_ref, des_ref, min_hamming=minHamming_prefilter)
+    kp_perspective, des_perspective = orb.detectAndCompute(img_perspective, None)
 
-    homography, mask, kp_perspective, des_perspective, matches = ransac(kp_ref, des_ref, img_perspective)
+    matches = im.openCVBF(kp_ref, des_ref, kp_perspective, des_perspective, crossCheck=False)
+    matches = postfilter.ratioFilter(matches, maxRatio=0.8)
+    matches = [m for m, n in matches]
+
+    homography, mask = ransac(kp_ref, kp_perspective, matches)
 
     click_point_ref = ime.LoadPoints(os.path.splitext(path_ref)[0] + '.click')
 
