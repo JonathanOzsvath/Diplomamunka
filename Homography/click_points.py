@@ -4,7 +4,7 @@ import sys
 import os
 
 mouseClicks = []
-imagePath = '../images/darts_felul.jpg'
+imagePath = '../images/video_ref.jpg'
 deleteSquareSide = 3
 
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         print("Nem sikerült a képet beolvasni!!!")
         exit(1)
 
-    img = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
+    # img = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 

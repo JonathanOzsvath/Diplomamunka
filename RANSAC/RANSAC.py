@@ -14,7 +14,8 @@ numberOfKeypoint = 1000
 minHamming_prefilter = 20
 
 
-def ransac(kp_ref, kp_perspective, matches, max_correct_radius=5.0, min_match_count=10):
+# p=0.999 valségű inlierhez N=26 kellene, de az opencv-nek nem lehet átadni
+def ransac(kp_ref, kp_perspective, matches, N=26, max_correct_radius=5.0, min_match_count=10):
 
     if len(matches) > min_match_count:
         src_pts = np.float32([kp_ref[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
@@ -25,7 +26,7 @@ def ransac(kp_ref, kp_perspective, matches, max_correct_radius=5.0, min_match_co
         a = 0
     else:
         homography = False
-        mask = False
+        mask = []
         print("Not enough matches are found - %d/%d".format(len(matches), min_match_count))
 
     return homography, mask

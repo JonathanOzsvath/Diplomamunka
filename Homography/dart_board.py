@@ -51,7 +51,7 @@ def generateDartBoardEdgePoints(numberOfCirclePointPerSector):
     return refPoints, circlePoints
 
 
-def drawDartBoard(img, referencePoints, circlePoints, numberOfCirclePointPerSector, color=(0, 255, 0), shift=(0, 0), savePath=''):
+def drawDartBoard(img, referencePoints, circlePoints, numberOfCirclePointPerSector, color=(0, 255, 0), shift=(0, 0), savePath='', showImage=True):
     numberOfCirclePoint = 20 * numberOfCirclePointPerSector
     middlePoint = []
     for i in range(0, numberOfCirclePoint, numberOfCirclePointPerSector):
@@ -79,9 +79,11 @@ def drawDartBoard(img, referencePoints, circlePoints, numberOfCirclePointPerSect
     if savePath != '':
         cv2.imwrite(savePath, img)
 
-    cv2.imshow("img", img)
+    if showImage:
+        cv2.imshow("img", img)
 
     cv2.waitKey(0)
+    return img
 
 
 def main():

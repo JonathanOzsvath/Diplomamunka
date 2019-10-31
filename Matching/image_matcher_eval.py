@@ -162,7 +162,8 @@ def drawPoints(img, points, name, color=(0, 255, 0), isGray=True):
     for point in points:
         img = cv2.circle(img, (int(point[0]), int(point[1])), 3, color, thickness=-1)
 
-    cv2.imshow(name, img)
+    # cv2.imshow(name, img)
+    return img
 
 
 def addTableRow(data, methodId, name_ref, minHammming, numberOfRefKeyPoint, numberOfFilteredKeyPoints, name_perspective,
