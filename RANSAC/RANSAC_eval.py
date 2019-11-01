@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 
 numberOfKeypoint = 1000
 numberOfCirclePointPerSector = 3
-
 minHamming_prefilter = 20
 
 
