@@ -11,7 +11,7 @@ import time
 import matplotlib.pyplot as plt
 
 numberOfKeypoint = 1000
-numberOfCirclePointPerSector = 1
+numberOfCirclePointPerSector = 3
 minHamming_prefilter = 20
 max_correct_radius = 5.0
 
@@ -47,11 +47,12 @@ def runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showIm
             matches = postfilter.ratioFilter(matches, maxRatio=0.8)
             matches = [m for m, n in matches]
 
-            homography_ransac, mask_ransac = RANSAC.ransac(kp_ref, kp_perspective, matches, max_correct_radius=max_correct_radius, min_match_count=25)
+            homography_ransac, mask_ransac = RANSAC.ransac(kp_ref, kp_perspective, matches, max_correct_radius=max_correct_radius, min_match_count=50)
             if len(mask_ransac) != 0:
                 mask_ransac = [m[0] for m in mask_ransac]
                 mask_ransac_array.append(len([m for m in mask_ransac if m == 1]))
             else:
+                counter += 1
                 mask_ransac_array.append(0)
                 out.write(frame)
                 continue
@@ -91,7 +92,7 @@ def runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showIm
     return mask_ransac_array
 
 
-def savePlot(mask_ransac_array):
+def savePlot(mask_ransac_array, name_perspective):
     x = range(len(mask_ransac_array))
     y = mask_ransac_array
 
@@ -101,8 +102,9 @@ def savePlot(mask_ransac_array):
     plt.xlabel('Frame number')
     plt.ylabel('#Inlier')
 
-    plt.savefig('output/InlierPerFrame.png', bbox_inches="tight")
+    plt.savefig('output/InlierPerFrame_' + name_perspective + '.png', bbox_inches="tight")
     plt.show()
+
 
 if __name__ == '__main__':
     directory = "output"
@@ -115,9 +117,9 @@ if __name__ == '__main__':
     img_ref = cv2.imread(path_ref)
     img_ref = cv2.cvtColor(img_ref, cv2.COLOR_BGR2GRAY)
 
-    name_perspective = "video1"
+    name_perspective = "video2"
     path_perspective = '../images/' + name_perspective + '.mp4'
 
-    mask_ransac_array = runVideo(img_ref, name_perspective, path_perspective, drawImage=False, showImage=False, saveImage=False)
+    mask_ransac_array = runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showImage=False, saveImage=True)
 
-    savePlot(mask_ransac_array)
+    savePlot(mask_ransac_array, name_perspective)
