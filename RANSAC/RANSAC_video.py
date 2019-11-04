@@ -96,7 +96,8 @@ def savePlot(mask_ransac_array, name_perspective):
     x = range(len(mask_ransac_array))
     y = mask_ransac_array
 
-    line = plt.bar(x, y)
+    plt.fill_between(x, y, color="skyblue", alpha=0.4)
+    plt.plot(x, y, color="skyblue")
 
     plt.title('Number of inliers / Frame')
     plt.xlabel('Frame number')
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     img_ref = cv2.imread(path_ref)
     img_ref = cv2.cvtColor(img_ref, cv2.COLOR_BGR2GRAY)
 
-    name_perspective = "video2"
+    name_perspective = "video1"
     path_perspective = '../images/' + name_perspective + '.mp4'
 
     mask_ransac_array = runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showImage=False, saveImage=True)
