@@ -16,16 +16,16 @@ minHamming_prefilter = 20
 max_correct_radius = 5.0
 
 
-def save(directoryName, img1, img1_name, img2, img2_name, img_subtracted, ifShow=False):
+def save(directoryName, img1, img1_name, img2, img2_name, img_subtracted, isShow=False):
     directory = "output/" + directoryName + "/"
     if not os.path.exists(directory):
         os.makedirs(directory)
 
     cv2.imwrite(directory + img1_name + '.jpg', img1)
-    cv2.imwrite(directory + img2_name + "subtracted.jpg", img_subtracted)
+    cv2.imwrite(directory + img2_name + "_subtracted.jpg", img_subtracted)
     cv2.imwrite(directory + img2_name + '_warpPerspective.jpg', img2)
 
-    if ifShow:
+    if isShow:
         cv2.imshow(img1_name, img1)
         cv2.imshow(img2_name, img2)
         cv2.imshow('subtracted', img_subtracted)
@@ -46,8 +46,8 @@ def averaging(img1, img1_name, img2, img2_name):
 
 
 def gaussian(img1, img1_name, img2, img2_name):
-    img1_blur = cv2.GaussianBlur(img1, (5, 5), 0)
-    img2_blur = cv2.GaussianBlur(img2, (5, 5), 0)
+    img1_blur = cv2.GaussianBlur(img1, (5, 5), 2)
+    img2_blur = cv2.GaussianBlur(img2, (5, 5), 2)
     img_subtracted = subtraction(img1_blur, img2_blur)
 
     save('Gaussian', img1_blur, img1_name, img2_blur, img2_name, img_subtracted)
@@ -59,6 +59,33 @@ def median(img1, img1_name, img2, img2_name):
     img_subtracted = subtraction(img1_blur, img2_blur)
 
     save('Median', img1_blur, img1_name, img2_blur, img2_name, img_subtracted)
+
+
+def sobel(img1, img1_name, img2, img2_name):
+    img1 = cv2.Sobel(img1, cv2.CV_8U, 1, 1, ksize=3)
+    img2 = cv2.Sobel(img2, cv2.CV_8U, 1, 1, ksize=3)
+
+    img_subtracted = subtraction(img1, img2)
+
+    save('Sobel', img1, img1_name, img2, img2_name, img_subtracted, isShow=False)
+
+
+def laplacian(img1, img1_name, img2, img2_name):
+    img1 = cv2.Laplacian(img1, cv2.CV_8U)
+    img2 = cv2.Laplacian(img2, cv2.CV_8U)
+
+    img_subtracted = subtraction(img1, img2)
+
+    save('Laplacian', img1, img1_name, img2, img2_name, img_subtracted, isShow=False)
+
+
+def canny(img1, img1_name, img2, img2_name):
+    # img2 = cv2.Laplacian(img2, cv2.CV_8U)
+    img2 = cv2.GaussianBlur(img2, (5, 5), 2)
+
+    edged = cv2.Canny(img2, 30, 200)
+
+    cv2.imshow('canny', edged)
 
 
 def subtraction(img1, img2):
@@ -113,9 +140,12 @@ if __name__ == '__main__':
 
     img = cv2.warpPerspective(img_perspective, inv_homography_ransac, (width, height))
 
-    withoutFilter(img_ref, name_ref, img, name_perspective)
-    averaging(img_ref, name_ref, img, name_perspective)
-    gaussian(img_ref, name_ref, img, name_perspective)
-    median(img_ref, name_ref, img, name_perspective)
+    # withoutFilter(img_ref, name_ref, img, name_perspective)
+    # averaging(img_ref, name_ref, img, name_perspective)
+    # gaussian(img_ref, name_ref, img, name_perspective)
+    # median(img_ref, name_ref, img, name_perspective)
+    # sobel(img_ref, name_ref, img, name_perspective)
+    # laplacian(img_ref, name_ref, img, name_perspective)
+    canny(img_ref, name_ref, img, name_perspective)
 
     cv2.waitKey(0)
