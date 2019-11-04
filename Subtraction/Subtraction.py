@@ -16,17 +16,52 @@ minHamming_prefilter = 20
 max_correct_radius = 5.0
 
 
-def averaging(img1, img2):
+def save(directoryName, img1, img1_name, img2, img2_name, img_subtracted, ifShow=False):
+    directory = "output/" + directoryName + "/"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    cv2.imwrite(directory + img1_name + '.jpg', img1)
+    cv2.imwrite(directory + img2_name + "subtracted.jpg", img_subtracted)
+    cv2.imwrite(directory + img2_name + '_warpPerspective.jpg', img2)
+
+    if ifShow:
+        cv2.imshow(img1_name, img1)
+        cv2.imshow(img2_name, img2)
+        cv2.imshow('subtracted', img_subtracted)
+
+
+def withoutFilter(img1, img1_name, img2, img2_name):
+    img_subtracted = subtraction(img1, img2)
+
+    save('', img1, img1_name, img2, img2_name, img_subtracted)
+
+
+def averaging(img1, img1_name, img2, img2_name):
     img1_blur = cv2.blur(img1, (5, 5))
     img2_blur = cv2.blur(img2, (5, 5))
+    img_subtracted = subtraction(img1_blur, img2_blur)
 
-    cv2.imshow('img1_blur', img1_blur)
-    cv2.imshow('img2_blur', img2_blur)
-
-    subtraction(img_ref, img, name_perspective + '_averaging_')
+    save('Averaging', img1_blur, img1_name, img2_blur, img2_name, img_subtracted)
 
 
-def subtraction(img1, img2, name):
+def gaussian(img1, img1_name, img2, img2_name):
+    img1_blur = cv2.GaussianBlur(img1, (5, 5), 0)
+    img2_blur = cv2.GaussianBlur(img2, (5, 5), 0)
+    img_subtracted = subtraction(img1_blur, img2_blur)
+
+    save('Gaussian', img1_blur, img1_name, img2_blur, img2_name, img_subtracted)
+
+
+def median(img1, img1_name, img2, img2_name):
+    img1_blur = cv2.medianBlur(img1, 5)
+    img2_blur = cv2.medianBlur(img2, 5)
+    img_subtracted = subtraction(img1_blur, img2_blur)
+
+    save('Median', img1_blur, img1_name, img2_blur, img2_name, img_subtracted)
+
+
+def subtraction(img1, img2):
     img1 = img1[:] / 255
     img2 = img2[:] / 255
 
@@ -34,8 +69,7 @@ def subtraction(img1, img2, name):
 
     img_subtracted = np.array([[np.uint8(j * 255) for j in i] for i in img_subtracted])
 
-    cv2.imshow('subtracted', img_subtracted)
-    cv2.imwrite("output/" + name + "_subtracted.jpg", img_subtracted)
+    return img_subtracted
 
 
 if __name__ == '__main__':
@@ -79,12 +113,9 @@ if __name__ == '__main__':
 
     img = cv2.warpPerspective(img_perspective, inv_homography_ransac, (width, height))
 
-    cv2.imshow('Ref', img_ref)
-    cv2.imwrite("output/" + name_ref + "_ref.jpg", img_ref)
-
-    cv2.imshow('Perspective', img)
-    cv2.imwrite("output/" + name_perspective + "_perspective.jpg", img)
-
-    averaging(img_ref, img)
+    withoutFilter(img_ref, name_ref, img, name_perspective)
+    averaging(img_ref, name_ref, img, name_perspective)
+    gaussian(img_ref, name_ref, img, name_perspective)
+    median(img_ref, name_ref, img, name_perspective)
 
     cv2.waitKey(0)
