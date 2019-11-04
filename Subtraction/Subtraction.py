@@ -15,6 +15,29 @@ numberOfCirclePointPerSector = 3
 minHamming_prefilter = 20
 max_correct_radius = 5.0
 
+
+def averaging(img1, img2):
+    img1_blur = cv2.blur(img1, (5, 5))
+    img2_blur = cv2.blur(img2, (5, 5))
+
+    cv2.imshow('img1_blur', img1_blur)
+    cv2.imshow('img2_blur', img2_blur)
+
+    subtraction(img_ref, img, name_perspective + '_averaging_')
+
+
+def subtraction(img1, img2, name):
+    img1 = img1[:] / 255
+    img2 = img2[:] / 255
+
+    img_subtracted = abs(img1 - img2)
+
+    img_subtracted = np.array([[np.uint8(j * 255) for j in i] for i in img_subtracted])
+
+    cv2.imshow('subtracted', img_subtracted)
+    cv2.imwrite("output/" + name + "_subtracted.jpg", img_subtracted)
+
+
 if __name__ == '__main__':
     directory = "output"
     if not os.path.exists(directory):
@@ -54,27 +77,14 @@ if __name__ == '__main__':
     homography_ransac, mask_ransac = RANSAC.ransac(kp_ref, kp_perspective, matches, max_correct_radius=max_correct_radius)
     inv_homography_ransac = np.linalg.inv(homography_ransac)
 
-    middlePoint_ref = ime.Project([(0, 0)], homography_matrix_ref)
-
     img = cv2.warpPerspective(img_perspective, inv_homography_ransac, (width, height))
-    # img = cv2.resize(img, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-    # img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-    # img_ref = cv2.cvtColor(img_ref, cv2.COLOR_GRAY2BGR)
     cv2.imshow('Ref', img_ref)
     cv2.imwrite("output/" + name_ref + "_ref.jpg", img_ref)
 
     cv2.imshow('Perspective', img)
     cv2.imwrite("output/" + name_perspective + "_perspective.jpg", img)
 
-    img_ref = img_ref[:] / 255
-    img = img[:] / 255
-
-    img_subtracted = abs(img_ref - img)
-
-    img_subtracted = img[:] * 255
-
-    cv2.imshow('subtracted', img_subtracted)
-    cv2.imwrite("output/" + name_perspective + "_subtracted.jpg", img_subtracted)
+    averaging(img_ref, img)
 
     cv2.waitKey(0)
