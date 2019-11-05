@@ -38,7 +38,7 @@ def setMouseCallback(event, x, y, flags, param):
             arrow.add((x, y))
             showImageWithClicks(radius=1)
         else:
-            notArrow.add((x,y))
+            notArrow.add((x, y))
             showImageWithClicks(radius=1)
 
     if event == cv2.EVENT_RBUTTONDOWN:
@@ -60,12 +60,38 @@ def setMouseCallback(event, x, y, flags, param):
                     showImageWithClicks(radius=1)
 
 
+def saveArrowSets(arrow, notArrow):
+    with open('output/arrowSet.txt', 'w') as f:
+        for x, y in arrow:
+            f.write('{}, {}\n'.format(x, y))
+
+    with open('output/notArrowSet.txt', 'w') as f:
+        for x, y in notArrow:
+            f.write('{}, {}\n'.format(x, y))
+
+
+def loadArrowSets():
+    arrow = []
+    notArrow = []
+
+    with open('output/arrowSet.txt', 'r') as f:
+        for line in f:
+            x, y = line.strip().split(',')
+            arrow.append((int(x), int(y)))
+
+    with open('output/notArrowSet.txt', 'r') as f:
+        for line in f:
+            x, y = line.strip().split(',')
+            notArrow.append((int(x), int(y)))
+
+    return arrow, notArrow
+
+
 if __name__ == '__main__':
     arrow = set()
     notArrow = set()
-    mouseClicks = []
 
-    name = "darts_with_arrow"
+    name = "darts_with_arrow3"
     path = '../images/' + name + '.jpg'
 
     img = cv2.imread(path)
@@ -86,22 +112,4 @@ if __name__ == '__main__':
             isArrow = not isArrow
             print(isArrow)
 
-    u_arrow = [img_yuv[y, x][1] for x, y in arrow]
-    v_arrow = [img_yuv[y, x][2] for x, y in arrow]
-
-    u_notArrow = [img_yuv[y, x][1] for x, y in notArrow]
-    v_notArrow = [img_yuv[y, x][2] for x, y in notArrow]
-
-    # plt.plot(u_arrow, v_arrow, 'gx')
-    # plt.plot(u_notArrow, v_notArrow, 'rx')
-    # plt.xlabel('U')
-    # plt.ylabel('V')
-
-    plt.plot(v_arrow, u_arrow, 'gx')
-    plt.plot(v_notArrow, u_notArrow, 'rx')
-    plt.xlabel('V')
-    plt.ylabel('U')
-
-# -(x - 150)² + 125 - y
-
-    plt.show()
+    saveArrowSets(arrow, notArrow)
