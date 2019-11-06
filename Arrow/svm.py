@@ -94,6 +94,6 @@ if __name__ == '__main__':
     # img_resize = cv2.resize(img, None, fx=0.1, fy=0.1, interpolation=cv2.INTER_CUBIC)
     # img_yuv = cv2.cvtColor(img_resize, cv2.COLOR_BGR2YUV)
 
-    segment(v_good, u_good, img_yuv)
+    # segment(v_good, u_good, img_yuv)
 
     cv2.waitKey(0)
