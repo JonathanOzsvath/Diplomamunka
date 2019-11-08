@@ -68,7 +68,7 @@ def computeHomography(img_ref, img_perspective):
     return homography_ransac, homography_ref
 
 
-def getArrow_notArrow(name, cutImg, cutImg_Lab, maskImg):
+def getArrow_notArrow(name, cutImg, cutImg_YUV, maskImg):
     height, width = cutImg.shape[:2]
     img_arrow = np.zeros(cutImg.shape, dtype=np.uint8)
     img_notArrow = np.zeros(cutImg.shape, dtype=np.uint8)
@@ -78,11 +78,11 @@ def getArrow_notArrow(name, cutImg, cutImg_Lab, maskImg):
     for y in range(0, height):
         for x in range(0, width):
             if maskImg[y, x] == 255 and set(cutImg[y, x]) != {255, 255, 255}:
-                arrow.append(cutImg_Lab[y, x][1:])
-                img_arrow[y, x] = cutImg_Lab[y, x]
+                arrow.append(cutImg_YUV[y, x][1:])
+                img_arrow[y, x] = cutImg_YUV[y, x]
             elif maskImg[y, x] == 0 and set(cutImg[y, x]) != {255, 255, 255}:
-                notArrow.append(cutImg_Lab[y, x][1:])
-                img_notArrow[y, x] = cutImg_Lab[y, x]
+                notArrow.append(cutImg_YUV[y, x][1:])
+                img_notArrow[y, x] = cutImg_YUV[y, x]
 
     # cv2.imwrite("output/" + name + "_arrow.jpg", img_arrow)
     # cv2.imwrite("output/" + name + "_notArrow.jpg", img_notArrow)
@@ -116,13 +116,13 @@ def getImages(img_ref_gray, path_perspective, path_perspective_mask):
     # cv2.imshow("cut", cutImg)
 
     # cutImg_Lab = cv2.cvtColor(cutImg, cv2.COLOR_BGR2Lab)
-    cutImg_Lab = cv2.cvtColor(cutImg, cv2.COLOR_BGR2YUV)
+    cutImg_YUV = cv2.cvtColor(cutImg, cv2.COLOR_BGR2YUV)
     # cv2.imshow("cutLab", cutImg_Lab)
 
     img_perspective_mask = cv2.warpPerspective(img_perspective_mask, inv_homography_ransac, (width, height))
     # cv2.imshow("mask", img_perspective_mask)
 
-    return cutImg, cutImg_Lab, img_perspective_mask
+    return cutImg, cutImg_YUV, img_perspective_mask
 
 
 if __name__ == '__main__':
@@ -155,9 +155,9 @@ if __name__ == '__main__':
         name_perspective_mask = name_perspective + '_mask'
         path_perspective_mask = '../images/' + name_perspective_mask + '.jpg'
 
-        cutImg, cutImg_Lab, img_perspective_mask = getImages(img_ref_gray, path_perspective, path_perspective_mask)
+        cutImg, cutImg_YUV, img_perspective_mask = getImages(img_ref_gray, path_perspective, path_perspective_mask)
 
-        arrow, notArrow = getArrow_notArrow(name_perspective, cutImg, cutImg_Lab, img_perspective_mask)
+        arrow, notArrow = getArrow_notArrow(name_perspective, cutImg, cutImg_YUV, img_perspective_mask)
 
         saveArrowSets(arrow, notArrow)
 
