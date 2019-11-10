@@ -10,11 +10,6 @@ import RANSAC
 import dart_board
 import cutOutside as co
 
-numberOfKeypoint = 1000
-numberOfCirclePointPerSector = 3
-minHamming_prefilter = 20
-max_correct_radius = 5.0
-
 
 def saveArrowSets(arrow, notArrow):
     with open('output/arrowSet.txt', 'a') as f:
@@ -43,86 +38,29 @@ def loadArrowSets():
     return arrow, notArrow
 
 
-def calcDistance(point1, point2):
-    return math.sqrt(
-        (point2[0] - point1[0]) * (point2[0] - point1[0]) + (point2[1] - point1[1]) * (point2[1] - point1[1]))
+def getArrow_notArrow(img_YUV, maskImg_positive, maskImg_negative):
+    maskImg_positive = cv2.cvtColor(maskImg_positive, cv2.COLOR_BGR2GRAY)
+    maskImg_negative = cv2.cvtColor(maskImg_negative, cv2.COLOR_BGR2GRAY)
 
-
-def computeHomography(img_ref, img_perspective):
-    click_point_ref = ime.LoadPoints(os.path.splitext(path_ref)[0] + '.click')
-
-    refPoints, circlePoints = dart_board.generateDartBoardEdgePoints(numberOfCirclePointPerSector)
-    homography_ref, _ = cv2.findHomography(np.array(refPoints), np.array(click_point_ref))
-
-    orb = cv2.ORB_create(numberOfKeypoint)
-    kp_ref, des_ref = orb.detectAndCompute(img_ref, None)
-    kp_ref, des_ref = prefilter.prefilter(kp_ref, des_ref, min_hamming=minHamming_prefilter)
-    kp_perspective, des_perspective = orb.detectAndCompute(img_perspective, None)
-
-    matches = im.openCVBF(kp_ref, des_ref, kp_perspective, des_perspective, crossCheck=False)
-    matches = postfilter.ratioFilter(matches, maxRatio=0.8)
-    matches = [m for m, n in matches]
-
-    homography_ransac, mask_ransac = RANSAC.ransac(kp_ref, kp_perspective, matches, max_correct_radius=max_correct_radius)
-
-    return homography_ransac, homography_ref
-
-
-def getArrow_notArrow(name, cutImg, cutImg_YUV, maskImg):
-    height, width = cutImg.shape[:2]
-    img_arrow = np.zeros(cutImg.shape, dtype=np.uint8)
-    img_notArrow = np.zeros(cutImg.shape, dtype=np.uint8)
+    height, width = maskImg_positive.shape[:2]
+    img_arrow = np.zeros((height, width), dtype=np.uint8)
+    img_notArrow = np.zeros((height, width), dtype=np.uint8)
     arrow = []
     notArrow = []
 
     for y in range(0, height):
         for x in range(0, width):
-            if maskImg[y, x] == 255 and set(cutImg[y, x]) != {255, 255, 255}:
-                arrow.append(cutImg_YUV[y, x][1:])
-                img_arrow[y, x] = cutImg_YUV[y, x]
-            elif maskImg[y, x] == 0 and set(cutImg[y, x]) != {255, 255, 255}:
-                notArrow.append(cutImg_YUV[y, x][1:])
-                img_notArrow[y, x] = cutImg_YUV[y, x]
+            if maskImg_positive[y, x] == 255 and maskImg_negative[y, x] == 255:
+                arrow.append(img_YUV[y, x][1:])
+                img_arrow[y, x] = 255
+            elif maskImg_positive[y, x] == 0 and maskImg_negative[y, x] == 255:
+                notArrow.append(img_YUV[y, x][1:])
+                img_notArrow[y, x] = 255
 
-    # cv2.imwrite("output/" + name + "_arrow.jpg", img_arrow)
-    # cv2.imwrite("output/" + name + "_notArrow.jpg", img_notArrow)
+    # cv2.imwrite("output/arrow.jpg", img_arrow)
+    # cv2.imwrite("output/notArrow.jpg", img_notArrow)
 
     return arrow, notArrow
-
-
-def getImages(img_ref_gray, path_perspective, path_perspective_mask):
-    img_perspective = cv2.imread(path_perspective)
-    img_perspective = cv2.resize(img_perspective, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
-    img_perspective_gray = cv2.cvtColor(img_perspective, cv2.COLOR_BGR2GRAY)
-
-    img_perspective_mask = cv2.imread(path_perspective_mask, 0)
-    img_perspective_mask = cv2.resize(img_perspective_mask, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
-
-    homography_ransac, homography_ref = computeHomography(img_ref_gray, img_perspective_gray)
-
-    midPoint_ref = ime.Project([(0, 0)], homography_ref)[0]
-
-    tableBoarderPoint = (225 * math.cos(math.radians(0)), 225 * math.sin(math.radians(0)))
-    tableBoarderPoint_ref = ime.Project([tableBoarderPoint], homography_ref)[0]
-
-    tableOutsideRadious = calcDistance(midPoint_ref, tableBoarderPoint_ref)
-
-    inv_homography_ransac = np.linalg.inv(homography_ransac)
-
-    height, width = img_perspective.shape[:2]
-    img = cv2.warpPerspective(img_perspective, inv_homography_ransac, (width, height))
-
-    cutImg = co.cutOutside(img, midPoint_ref, tableOutsideRadious)
-    # cv2.imshow("cut", cutImg)
-
-    # cutImg_Lab = cv2.cvtColor(cutImg, cv2.COLOR_BGR2Lab)
-    cutImg_YUV = cv2.cvtColor(cutImg, cv2.COLOR_BGR2YUV)
-    # cv2.imshow("cutLab", cutImg_Lab)
-
-    img_perspective_mask = cv2.warpPerspective(img_perspective_mask, inv_homography_ransac, (width, height))
-    # cv2.imshow("mask", img_perspective_mask)
-
-    return cutImg, cutImg_YUV, img_perspective_mask
 
 
 if __name__ == '__main__':
@@ -138,26 +76,35 @@ if __name__ == '__main__':
     if os.path.exists(filePath):
         os.remove(filePath)
 
-    name_ref = "darts1_1"
-    path_ref = '../images/' + name_ref + '.jpg'
-
     name_perspectives = ['darts_with_arrow', 'darts_with_arrow2', 'darts_with_arrow3', 'darts_with_arrow4', 'darts_with_arrow5', 'darts_with_arrow6',
                          'darts_with_arrow7', 'darts_with_arrow8', 'darts_with_arrow9', 'darts_with_arrow10']
-    # name_perspectives = ['darts_with_arrow', 'darts_with_arrow2']
-
-    img_ref = cv2.imread(path_ref)
-    img_ref = cv2.resize(img_ref, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
-    img_ref_gray = cv2.cvtColor(img_ref, cv2.COLOR_BGR2GRAY)
+    # name_perspectives = ['darts_with_arrow']
 
     for name_perspective in name_perspectives:
+        directory = "output/" + name_perspective + "/"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         path_perspective = '../images/' + name_perspective + '.jpg'
+        img_perspective = cv2.imread(path_perspective)
+        img_perspective = cv2.resize(img_perspective, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
+        img_YUV = cv2.cvtColor(img_perspective, cv2.COLOR_BGR2YUV)
 
-        name_perspective_mask = name_perspective + '_mask'
-        path_perspective_mask = '../images/' + name_perspective_mask + '.jpg'
+        name_perspective_mask_positive = name_perspective + '_mask_positive'
+        path_perspective_mask_positive = '../images/' + name_perspective_mask_positive + '.jpg'
+        img_perspective_mask_positive = cv2.imread(path_perspective_mask_positive)
+        img_perspective_mask_positive = cv2.resize(img_perspective_mask_positive, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
 
-        cutImg, cutImg_YUV, img_perspective_mask = getImages(img_ref_gray, path_perspective, path_perspective_mask)
+        name_perspective_mask_negative = name_perspective + '_mask_negative'
+        path_perspective_mask_negative = '../images/' + name_perspective_mask_negative + '.jpg'
+        img_perspective_mask_negative = cv2.imread(path_perspective_mask_negative)
+        img_perspective_mask_negative = cv2.resize(img_perspective_mask_negative, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
 
-        arrow, notArrow = getArrow_notArrow(name_perspective, cutImg, cutImg_YUV, img_perspective_mask)
+        cv2.imwrite(directory + name_perspective + '.jpg', img_perspective)
+        cv2.imwrite(directory + name_perspective_mask_positive + '.jpg', img_perspective_mask_positive)
+        cv2.imwrite(directory + name_perspective_mask_negative + '.jpg', img_perspective_mask_negative)
+
+        arrow, notArrow = getArrow_notArrow(img_YUV, img_perspective_mask_positive, img_perspective_mask_negative)
 
         saveArrowSets(arrow, notArrow)
 

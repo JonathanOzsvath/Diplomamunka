@@ -25,7 +25,7 @@ def cutOutside(img, midPoint, tableOutsideRadious):
     for y in range(0, height):
         for x in range(0, width):
             if calcDistance((x, y), midPoint) > tableOutsideRadious:
-                img[y, x] = (255, 255, 255)
+                img[y, x] = (0, 0, 0)
 
     return img
 
