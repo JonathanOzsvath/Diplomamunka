@@ -43,7 +43,7 @@ def makePlot(arrows, notArrows):
     ax = fig.add_subplot(1, 1, 1)
 
     major_ticks = np.arange(0, 256, 20)
-    minor_ticks = np.arange(0, 256, 5)
+    minor_ticks = np.arange(0, 256, du)
 
     ax.set_xticks(major_ticks)
     ax.set_xticks(minor_ticks, minor=True)
@@ -235,8 +235,8 @@ if __name__ == '__main__':
     # positive_max = np.ndarray.max(color_histogram_positive)
     # negative_max = np.ndarray.max(color_histogram_negative)
 
-    positive_max = 5
-    negative_max = 5
+    positive_max = 100
+    negative_max = 5000
 
     img_color_histogram_positive = np.array(color_histogram_positive / positive_max * 255, dtype=np.uint8)
     img_color_histogram_positive = cv2.resize(img_color_histogram_positive, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)

@@ -57,8 +57,8 @@ def getArrow_notArrow(img_YUV, maskImg_positive, maskImg_negative):
                 notArrow.append(img_YUV[y, x][1:])
                 img_notArrow[y, x] = 255
 
-    # cv2.imwrite("output/arrow.jpg", img_arrow)
-    # cv2.imwrite("output/notArrow.jpg", img_notArrow)
+    cv2.imwrite("output/arrow.jpg", img_arrow)
+    cv2.imwrite("output/notArrow.jpg", img_notArrow)
 
     return arrow, notArrow
 
