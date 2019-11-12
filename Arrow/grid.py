@@ -4,15 +4,16 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import ArrowSets
+import globalVariable as gv
 
 resize = 40
-du = 10
-dv = 10
+du = gv.d
+dv = gv.d
 
 
 def computeColorHist2D(arrows, notArrows, umin, umax, vmin, vmax, du=10, dv=10):
-    color_histogram_positive = np.zeros((int(255 / du), int(255 / dv)), dtype=np.int)
-    color_histogram_negative = np.zeros((int(255 / du), int(255 / dv)), dtype=np.int)
+    color_histogram_positive = np.zeros((math.ceil(255 / du), math.ceil(255 / dv)), dtype=np.int)
+    color_histogram_negative = np.zeros((math.ceil(255 / du), math.ceil(255 / dv)), dtype=np.int)
 
     for u, v in arrows:
         i = math.floor((v - vmin) / dv)
@@ -97,8 +98,8 @@ def computeBinaryMatrix(color_histogram_positive, color_histogram_negative):
 
 
 def computeRGBMatrix(arrows, notArrows, umin, umax, vmin, vmax, du=10, dv=10):
-    sumMatrix = np.zeros((int(255 / du), int(255 / dv), 3), dtype=np.int)
-    yuvMatrix = np.zeros((int(255 / du), int(255 / dv), 3), dtype=np.uint8)
+    sumMatrix = np.zeros((math.ceil(255 / du), math.ceil(255 / dv), 3), dtype=np.int)
+    yuvMatrix = np.zeros((math.ceil(255 / du), math.ceil(255 / dv), 3), dtype=np.uint8)
     width, height = sumMatrix.shape[:2]
 
     for u, v in arrows:
@@ -235,8 +236,8 @@ if __name__ == '__main__':
     # positive_max = np.ndarray.max(color_histogram_positive)
     # negative_max = np.ndarray.max(color_histogram_negative)
 
-    positive_max = 100
-    negative_max = 5000
+    positive_max = 5
+    negative_max = 5
 
     img_color_histogram_positive = np.array(color_histogram_positive / positive_max * 255, dtype=np.uint8)
     img_color_histogram_positive = cv2.resize(img_color_histogram_positive, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
@@ -284,14 +285,14 @@ if __name__ == '__main__':
 
     # names = ['darts_with_arrow']
 
-    for name in names:
-        path = '../images/' + name + '.jpg'
-        img = cv2.imread(path)
-        img_resize = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
-        img_yuv = cv2.cvtColor(img_resize, cv2.COLOR_BGR2YUV)
-
-        # binarySegmentation(img_yuv, binaryMatrix, 0, 255, 0, 255)
-        probabilitySegmentation(name, img_yuv, P_positive, 0, 255, 0, 255)
-        colorDiscreteSegmentation(name, img_yuv, rgbMatrix, 0, 255, 0, 255)
+    # for name in names:
+    #     path = '../images/' + name + '.jpg'
+    #     img = cv2.imread(path)
+    #     img_resize = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
+    #     img_yuv = cv2.cvtColor(img_resize, cv2.COLOR_BGR2YUV)
+    #
+    #     # binarySegmentation(img_yuv, binaryMatrix, 0, 255, 0, 255)
+    #     probabilitySegmentation(name, img_yuv, P_positive, 0, 255, 0, 255)
+    #     colorDiscreteSegmentation(name, img_yuv, rgbMatrix, 0, 255, 0, 255)
 
     cv2.waitKey(0)
