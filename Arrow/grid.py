@@ -1,6 +1,7 @@
 import os
 import cv2
 import math
+import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 import ArrowSets
@@ -97,32 +98,20 @@ def computeBinaryMatrix(color_histogram_positive, color_histogram_negative):
     return binaryMatrix
 
 
-def computeRGBMatrix(arrows, notArrows, umin, umax, vmin, vmax, du=10, dv=10):
-    sumMatrix = np.zeros((math.ceil(255 / du), math.ceil(255 / dv), 3), dtype=np.int)
-    yuvMatrix = np.zeros((math.ceil(255 / du), math.ceil(255 / dv), 3), dtype=np.uint8)
-    width, height = sumMatrix.shape[:2]
+def computeRGBMatrix(du=10, dv=10):
+    row, column = math.ceil(255 / du), math.ceil(255 / dv)
+    img = np.zeros((row, column, 3), dtype=np.uint8)
 
-    for u, v in arrows:
-        i = math.floor((v - vmin) / dv)
-        j = math.floor((u - umin) / du)
-        sumMatrix[i, j] = sumMatrix[i, j] + [u, v, 1]
+    for u in range(int(du / 2), 256, du):
+        for v in range(int(dv / 2), 256, dv):
+            i = math.floor(u / du)
+            j = math.floor(v / dv)
 
-    for u, v in notArrows:
-        i = math.floor((v - vmin) / dv)
-        j = math.floor((u - umin) / du)
-        sumMatrix[i, j] = sumMatrix[i, j] + [u, v, 1]
+            img[j, i] = [0, u, v]
 
-    for i in range(width):
-        for j in range(height):
-            if sumMatrix[i, j][2] == 0:
-                # sumMatrix[i, j][2] = 1
-                yuvMatrix[i, j] = [0, 128, 128]
-            else:
-                yuvMatrix[i, j] = [0, sumMatrix[i, j][0] / sumMatrix[i, j][2], sumMatrix[i, j][1] / sumMatrix[i, j][2]]
+    img_RGB = cv2.cvtColor(img, cv2.COLOR_YUV2BGR)
 
-    img_rgbMatrix = cv2.cvtColor(yuvMatrix, cv2.COLOR_YUV2BGR)
-
-    return img_rgbMatrix
+    return img_RGB
 
 
 def binarySegmentation(img_YUV, binaryMatrix, umin, umax, vmin, vmax, du=10, dv=10):
@@ -163,27 +152,6 @@ def probabilitySegmentation(name, img_YUV, P_positive, umin, umax, vmin, vmax, d
     cv2.imwrite(directory + name + '_probability.jpg', img)
 
 
-def probabilitySegmentation2(name, img_YUV, P_positive, umin, umax, vmin, vmax, du=10, dv=10):
-    directory = "output/name"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    height, width = img_YUV.shape[:2]
-    img = np.zeros(img_YUV.shape, dtype=np.uint8)
-
-    for y in range(height):
-        for x in range(width):
-            u, v = img_YUV[y, x][1:]
-            i = math.floor((v - vmin) / dv)
-            j = math.floor((u - umin) / du)
-
-            if P_positive[i, j] >= 0.1:
-                img[y, x] = img_YUV[y, x]
-
-    cv2.imshow('probabilitySegmentation', img)
-    cv2.imwrite(directory + name + '_segmentation.jpg', img)
-
-
 def colorDiscreteSegmentation(name, img_YUV, rgbMatrix, umin, umax, vmin, vmax, du=10, dv=10):
     directory = "output/" + name + "/"
     if not os.path.exists(directory):
@@ -205,7 +173,7 @@ def colorDiscreteSegmentation(name, img_YUV, rgbMatrix, umin, umax, vmin, vmax, 
 
 
 def drawPoly(img, arrows_poly, notArrows_poly):
-    img = cv2.polylines(img, np.int32([arrows_poly]), True, (0, 0, 0), thickness=3)
+    img = cv2.polylines(img, np.int32([arrows_poly]), True, (255, 255, 255), thickness=3)
     img = cv2.polylines(img, np.int32([notArrows_poly]), True, (255, 255, 255), thickness=3)
 
     return img
@@ -236,10 +204,24 @@ if __name__ == '__main__':
     # positive_max = np.ndarray.max(color_histogram_positive)
     # negative_max = np.ndarray.max(color_histogram_negative)
 
-    positive_max = 5
-    negative_max = 5
+    result = np.where(color_histogram_positive > 0)
+    not_zero_positive_elements_indeces = list(zip(result[0], result[1]))
+    not_zero_positive_elements = [color_histogram_positive[i, j] for i, j in not_zero_positive_elements_indeces]
 
-    img_color_histogram_positive = np.array(color_histogram_positive / positive_max * 255, dtype=np.uint8)
+    result = np.where(color_histogram_negative > 0)
+    not_zero_negative_elements_indeces = list(zip(result[0], result[1]))
+    not_zero_negative_elements = [color_histogram_negative[i, j] for i, j in not_zero_negative_elements_indeces]
+
+    positive_max = statistics.median(not_zero_positive_elements)
+    negative_max = statistics.median(not_zero_negative_elements)
+
+    img_color_histogram_positive = np.array(color_histogram_positive / positive_max)
+    for i in range(img_color_histogram_positive.shape[0]):
+        for j in range(img_color_histogram_positive.shape[1]):
+            if img_color_histogram_positive[i, j] > 1.0:
+                img_color_histogram_positive[i, j] = 1.0
+
+    img_color_histogram_positive = np.array(color_histogram_positive * 255, dtype=np.uint8)
     img_color_histogram_positive = cv2.resize(img_color_histogram_positive, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
     img_color_histogram_positive = cv2.applyColorMap(img_color_histogram_positive, cv2.COLORMAP_JET)
     img_color_histogram_positive = drawPoly(img_color_histogram_positive, arrows_poly, notArrows_poly)
@@ -247,38 +229,36 @@ if __name__ == '__main__':
     cv2.imshow('img_color_histogram_positive', img_color_histogram_positive)
     cv2.imwrite('output/img_color_histogram_positive.jpg', img_color_histogram_positive)
 
+    img_color_histogram_negative = np.array(color_histogram_negative / negative_max)
+    for i in range(img_color_histogram_negative.shape[0]):
+        for j in range(img_color_histogram_negative.shape[1]):
+            if img_color_histogram_negative[i, j] > 1.0:
+                img_color_histogram_negative[i, j] = 1.0
+
     img_color_histogram_negative = np.array(color_histogram_negative / negative_max * 255, dtype=np.uint8)
     img_color_histogram_negative = cv2.resize(img_color_histogram_negative, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
     img_color_histogram_negative = cv2.applyColorMap(img_color_histogram_negative, cv2.COLORMAP_JET)
-
     img_color_histogram_negative = drawPoly(img_color_histogram_negative, arrows_poly, notArrows_poly)
-
     img_color_histogram_negative = cv2.flip(img_color_histogram_negative, 0)
     cv2.imshow('img_color_histogram_negative', img_color_histogram_negative)
     cv2.imwrite('output/img_color_histogram_negative.jpg', img_color_histogram_negative)
 
-    P_positive = computePMatrix(color_histogram_positive, color_histogram_negative)
-    img_P_positive = np.array(P_positive * 255, dtype=np.uint8)
-    img_P_positive = cv2.resize(img_P_positive, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
-    img_P_positive = cv2.applyColorMap(img_P_positive, cv2.COLORMAP_JET)
-    img_P_positive = drawPoly(img_P_positive, arrows_poly, notArrows_poly)
-    img_P_positive = cv2.flip(img_P_positive, 0)
-    cv2.imshow('img_P_positive', img_P_positive)
-    cv2.imwrite('output/img_P_positive.jpg', img_P_positive)
-
-    # binaryMatrix = computeBinaryMatrix(color_histogram_positive, color_histogram_negative)
-    # img_binaryMatrix = np.array(binaryMatrix * 255, dtype=np.uint8)
-    # img_binaryMatrix = cv2.resize(img_binaryMatrix, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
-    # img_binaryMatrix = cv2.flip(img_binaryMatrix, 0)
-    # cv2.imshow('binaryMatrix', img_binaryMatrix)
-    # cv2.imwrite('output/binaryMatrix.jpg', img_binaryMatrix)
-
-    rgbMatrix = computeRGBMatrix(arrows, notArrows, 0, 255, 0, 255)
+    rgbMatrix = computeRGBMatrix()
     img_rgbMatrix = cv2.resize(rgbMatrix, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
     img_rgbMatrix = drawPoly(img_rgbMatrix, arrows_poly, notArrows_poly)
     img_rgbMatrix = cv2.flip(img_rgbMatrix, 0)
     cv2.imshow('rgbMatrix', img_rgbMatrix)
     cv2.imwrite('output/rgbMatrix.jpg', img_rgbMatrix)
+
+    # --------------------------------------------------------------------------------------------------------
+    # P_positive = computePMatrix(color_histogram_positive, color_histogram_negative)
+    # img_P_positive = np.array(P_positive * 255, dtype=np.uint8)
+    # img_P_positive = cv2.resize(img_P_positive, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
+    # img_P_positive = cv2.applyColorMap(img_P_positive, cv2.COLORMAP_JET)
+    # img_P_positive = drawPoly(img_P_positive, arrows_poly, notArrows_poly)
+    # img_P_positive = cv2.flip(img_P_positive, 0)
+    # cv2.imshow('img_P_positive', img_P_positive)
+    # cv2.imwrite('output/img_P_positive.jpg', img_P_positive)
 
     names = ['darts_with_arrow', 'darts_with_arrow2', 'darts_with_arrow3', 'darts_with_arrow4', 'darts_with_arrow5', 'darts_with_arrow6',
              'darts_with_arrow7', 'darts_with_arrow8', 'darts_with_arrow9', 'darts_with_arrow10']
