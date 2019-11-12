@@ -38,7 +38,7 @@ def loadArrowSets():
     return arrow, notArrow
 
 
-def getArrow_notArrow(img_YUV, maskImg_positive, maskImg_negative):
+def getArrow_notArrow(name, img_YUV, maskImg_positive, maskImg_negative):
     maskImg_positive = cv2.cvtColor(maskImg_positive, cv2.COLOR_BGR2GRAY)
     maskImg_negative = cv2.cvtColor(maskImg_negative, cv2.COLOR_BGR2GRAY)
 
@@ -57,8 +57,8 @@ def getArrow_notArrow(img_YUV, maskImg_positive, maskImg_negative):
                 notArrow.append(img_YUV[y, x][1:])
                 img_notArrow[y, x] = 255
 
-    cv2.imwrite("output/arrow.jpg", img_arrow)
-    cv2.imwrite("output/notArrow.jpg", img_notArrow)
+    # cv2.imwrite("output/arrow.jpg", img_arrow)
+    cv2.imwrite("output/" + name + ".jpg", img_notArrow)
 
     return arrow, notArrow
 
@@ -76,7 +76,8 @@ if __name__ == '__main__':
     if os.path.exists(filePath):
         os.remove(filePath)
 
-    name_perspectives = ['darts_with_arrow', 'darts_with_arrow2', 'darts_with_arrow3', 'darts_with_arrow4', 'darts_with_arrow5', 'darts_with_arrow6',
+    name_perspectives = ['darts_with_arrow', 'darts_with_arrow2', 'darts_with_arrow3', 'darts_with_arrow4',
+                         'darts_with_arrow5', 'darts_with_arrow6',
                          'darts_with_arrow7', 'darts_with_arrow8', 'darts_with_arrow9', 'darts_with_arrow10']
     # name_perspectives = ['darts_with_arrow']
 
@@ -93,18 +94,21 @@ if __name__ == '__main__':
         name_perspective_mask_positive = name_perspective + '_mask_positive'
         path_perspective_mask_positive = '../images/' + name_perspective_mask_positive + '.jpg'
         img_perspective_mask_positive = cv2.imread(path_perspective_mask_positive)
-        img_perspective_mask_positive = cv2.resize(img_perspective_mask_positive, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
+        img_perspective_mask_positive = cv2.resize(img_perspective_mask_positive, None, fx=0.25, fy=0.25,
+                                                   interpolation=cv2.INTER_CUBIC)
 
         name_perspective_mask_negative = name_perspective + '_mask_negative'
         path_perspective_mask_negative = '../images/' + name_perspective_mask_negative + '.jpg'
         img_perspective_mask_negative = cv2.imread(path_perspective_mask_negative)
-        img_perspective_mask_negative = cv2.resize(img_perspective_mask_negative, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
+        img_perspective_mask_negative = cv2.resize(img_perspective_mask_negative, None, fx=0.25, fy=0.25,
+                                                   interpolation=cv2.INTER_CUBIC)
 
         cv2.imwrite(directory + name_perspective + '.jpg', img_perspective)
         cv2.imwrite(directory + name_perspective_mask_positive + '.jpg', img_perspective_mask_positive)
         cv2.imwrite(directory + name_perspective_mask_negative + '.jpg', img_perspective_mask_negative)
 
-        arrow, notArrow = getArrow_notArrow(img_YUV, img_perspective_mask_positive, img_perspective_mask_negative)
+        arrow, notArrow = getArrow_notArrow(name_perspective_mask_negative, img_YUV, img_perspective_mask_positive,
+                                            img_perspective_mask_negative)
 
         saveArrowSets(arrow, notArrow)
 
