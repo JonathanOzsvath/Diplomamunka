@@ -15,8 +15,10 @@ if __name__ == '__main__':
     # img1 = cv2.Laplacian(img1, cv2.CV_8U)
     # img1 = cv2.medianBlur(img1, 11)
     # img1 = cv2.Canny(img1, 30, 200)
+
     # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
     # dilated = cv2.dilate(img1, kernel)
+
     # cv2.imshow('blur', img1)
 
     img2 = img1.copy()
