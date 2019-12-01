@@ -85,7 +85,7 @@ if __name__ == '__main__':
     path_mask = '../images/' + name_mask + '.jpg'
     img_mask = cv2.imread(path_mask, 0)
 
-    # discretise_YUV(name, img_YUV)
+    discretise_YUV(name, img_YUV)
     maskAverage(name, img, img_mask)
 
     cv2.waitKey(0)

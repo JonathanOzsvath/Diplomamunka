@@ -16,6 +16,14 @@ minHamming_prefilter = 20
 max_correct_radius = 5.0
 
 
+def saveImg(img, name):
+    directory = "output/video/"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    cv2.imwrite(directory + name + ".jpg", img)
+
+
 def runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showImage=False, saveImage=True):
     mask_ransac_array = []
 
@@ -55,6 +63,7 @@ def runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showIm
                 counter += 1
                 mask_ransac_array.append(0)
                 out.write(frame)
+                saveImg(frame, str(counter))
                 continue
 
             click_point_ref = ime.LoadPoints(os.path.splitext(path_ref)[0] + '.click')
@@ -72,6 +81,7 @@ def runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showIm
 
             if saveImage:
                 out.write(img)
+                saveImg(img, str(counter))
 
             end = time.time()
             runTime = ime.getRunTime(start, end)
@@ -118,7 +128,7 @@ if __name__ == '__main__':
     img_ref = cv2.imread(path_ref)
     img_ref = cv2.cvtColor(img_ref, cv2.COLOR_BGR2GRAY)
 
-    name_perspective = "video1"
+    name_perspective = "video2"
     path_perspective = '../images/' + name_perspective + '.mp4'
 
     mask_ransac_array = runVideo(img_ref, name_perspective, path_perspective, drawImage=True, showImage=False, saveImage=True)

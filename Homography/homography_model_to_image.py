@@ -6,7 +6,7 @@ import math
 import statistics
 import dart_board
 
-imagePath = '../images/darts_felul.jpg'
+imagePath = '../images/darts2_1.jpg'
 numberOfCirclePointPerSector = 10
 
 

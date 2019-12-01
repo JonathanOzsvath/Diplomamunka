@@ -57,11 +57,7 @@ def drawDartBoard(img, referencePoints, circlePoints, numberOfCirclePointPerSect
     for i in range(0, numberOfCirclePoint, numberOfCirclePointPerSector):
         middlePoint.append(circlePoints[4 * numberOfCirclePoint + i])
 
-    for i in range(0, 20):
-        refPoint = (int(round(referencePoints[i][0] + shift[0])), int(round(referencePoints[i][1] + shift[1])))
-        midPoint = (int(round(middlePoint[i][0] + shift[0])), int(round(middlePoint[i][1] + shift[1])))
-        img = cv2.circle(img, refPoint, 3, (0, 0, 255), thickness=-1)
-        img = cv2.line(img, refPoint, midPoint, color, thickness=2, lineType=cv2.LINE_AA)
+
 
     for i in range(0, 6):
         for j in range(0, numberOfCirclePoint - 1):
@@ -75,6 +71,12 @@ def drawDartBoard(img, referencePoints, circlePoints, numberOfCirclePointPerSect
         point2 = (int(round(circlePoints[(i + 1) * numberOfCirclePoint - 1][0] + shift[0])),
                   int(round(circlePoints[(i + 1) * numberOfCirclePoint - 1][1] + shift[1])))
         img = cv2.line(img, point1, point2, color, thickness=2, lineType=cv2.LINE_AA)
+
+    for i in range(0, 20):
+        refPoint = (int(round(referencePoints[i][0] + shift[0])), int(round(referencePoints[i][1] + shift[1])))
+        midPoint = (int(round(middlePoint[i][0] + shift[0])), int(round(middlePoint[i][1] + shift[1])))
+        img = cv2.line(img, refPoint, midPoint, color, thickness=2, lineType=cv2.LINE_AA)
+        img = cv2.circle(img, refPoint, 3, (0, 0, 255), thickness=-1)
 
     if savePath != '':
         cv2.imwrite(savePath, img)

@@ -201,19 +201,19 @@ if __name__ == '__main__':
     # color_histogram_positive = np.loadtxt('output/color_histogram_positive.txt', dtype=np.int)
     # color_histogram_negative = np.loadtxt('output/color_histogram_negative.txt', dtype=np.int)
 
-    # positive_max = np.ndarray.max(color_histogram_positive)
-    # negative_max = np.ndarray.max(color_histogram_negative)
+    positive_max = np.ndarray.max(color_histogram_positive)
+    negative_max = np.ndarray.max(color_histogram_negative)
 
-    result = np.where(color_histogram_positive > 0)
-    not_zero_positive_elements_indeces = list(zip(result[0], result[1]))
-    not_zero_positive_elements = [color_histogram_positive[i, j] for i, j in not_zero_positive_elements_indeces]
-
-    result = np.where(color_histogram_negative > 0)
-    not_zero_negative_elements_indeces = list(zip(result[0], result[1]))
-    not_zero_negative_elements = [color_histogram_negative[i, j] for i, j in not_zero_negative_elements_indeces]
-
-    positive_max = statistics.median(not_zero_positive_elements)
-    negative_max = statistics.median(not_zero_negative_elements)
+    # result = np.where(color_histogram_positive > 0)
+    # not_zero_positive_elements_indeces = list(zip(result[0], result[1]))
+    # not_zero_positive_elements = [color_histogram_positive[i, j] for i, j in not_zero_positive_elements_indeces]
+    #
+    # result = np.where(color_histogram_negative > 0)
+    # not_zero_negative_elements_indeces = list(zip(result[0], result[1]))
+    # not_zero_negative_elements = [color_histogram_negative[i, j] for i, j in not_zero_negative_elements_indeces]
+    #
+    # positive_max = statistics.median(not_zero_positive_elements)
+    # negative_max = statistics.median(not_zero_negative_elements)
 
     img_color_histogram_positive = np.array(color_histogram_positive / positive_max)
     for i in range(img_color_histogram_positive.shape[0]):
@@ -221,7 +221,7 @@ if __name__ == '__main__':
             if img_color_histogram_positive[i, j] > 1.0:
                 img_color_histogram_positive[i, j] = 1.0
 
-    img_color_histogram_positive = np.array(color_histogram_positive * 255, dtype=np.uint8)
+    img_color_histogram_positive = np.array(img_color_histogram_positive * 255, dtype=np.uint8)
     img_color_histogram_positive = cv2.resize(img_color_histogram_positive, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
     img_color_histogram_positive = cv2.applyColorMap(img_color_histogram_positive, cv2.COLORMAP_JET)
     img_color_histogram_positive = drawPoly(img_color_histogram_positive, arrows_poly, notArrows_poly)
@@ -235,7 +235,7 @@ if __name__ == '__main__':
             if img_color_histogram_negative[i, j] > 1.0:
                 img_color_histogram_negative[i, j] = 1.0
 
-    img_color_histogram_negative = np.array(color_histogram_negative / negative_max * 255, dtype=np.uint8)
+    img_color_histogram_negative = np.array(img_color_histogram_negative * 255, dtype=np.uint8)
     img_color_histogram_negative = cv2.resize(img_color_histogram_negative, None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
     img_color_histogram_negative = cv2.applyColorMap(img_color_histogram_negative, cv2.COLORMAP_JET)
     img_color_histogram_negative = drawPoly(img_color_histogram_negative, arrows_poly, notArrows_poly)
@@ -260,19 +260,19 @@ if __name__ == '__main__':
     # cv2.imshow('img_P_positive', img_P_positive)
     # cv2.imwrite('output/img_P_positive.jpg', img_P_positive)
 
-    names = ['darts_with_arrow', 'darts_with_arrow2', 'darts_with_arrow3', 'darts_with_arrow4', 'darts_with_arrow5', 'darts_with_arrow6',
-             'darts_with_arrow7', 'darts_with_arrow8', 'darts_with_arrow9', 'darts_with_arrow10']
+    # names = ['darts_with_arrow', 'darts_with_arrow2', 'darts_with_arrow3', 'darts_with_arrow4', 'darts_with_arrow5', 'darts_with_arrow6',
+    #          'darts_with_arrow7', 'darts_with_arrow8', 'darts_with_arrow9', 'darts_with_arrow10']
 
-    # names = ['darts_with_arrow']
+    names = ['darts_with_arrow']
 
-    # for name in names:
-    #     path = '../images/' + name + '.jpg'
-    #     img = cv2.imread(path)
-    #     img_resize = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
-    #     img_yuv = cv2.cvtColor(img_resize, cv2.COLOR_BGR2YUV)
-    #
-    #     # binarySegmentation(img_yuv, binaryMatrix, 0, 255, 0, 255)
-    #     probabilitySegmentation(name, img_yuv, P_positive, 0, 255, 0, 255)
-    #     colorDiscreteSegmentation(name, img_yuv, rgbMatrix, 0, 255, 0, 255)
+    for name in names:
+        path = '../images/' + name + '.jpg'
+        img = cv2.imread(path)
+        img_resize = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
+        img_yuv = cv2.cvtColor(img_resize, cv2.COLOR_BGR2YUV)
+
+        # binarySegmentation(img_yuv, binaryMatrix, 0, 255, 0, 255)
+        # probabilitySegmentation(name, img_yuv, P_positive, 0, 255, 0, 255)
+        colorDiscreteSegmentation(name, img_yuv, rgbMatrix, 0, 255, 0, 255)
 
     cv2.waitKey(0)

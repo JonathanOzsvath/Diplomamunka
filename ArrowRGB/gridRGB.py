@@ -84,7 +84,7 @@ def probabilitySegmentation2(name, img, P_positive, min_P, bmin=0, gmin=0, rmin=
             k = math.floor((r - rmin) / dr)
 
             if P_positive[i, j, k] >= min_P:
-                img_P[y, x] = 255
+                img_P[y, x] = P_positive[i, j, k] * 255
             else:
                 img_P[y, x] = 0
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     P_positive = computePMatrix(color_histogram_positive, color_histogram_negative)
 
-    for name in gv.name_perspectives:
+    for name in gv.name_perspectives_test:
         path = '../images/' + name + '.jpg'
         img = cv2.imread(path)
         img_resize = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)

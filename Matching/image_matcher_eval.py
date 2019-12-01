@@ -244,7 +244,10 @@ def runMethod(data, summary, methodId, method_name, name_ref, name_perspective, 
     else:
         maxRatio_postfilter = '-'
 
-    matches = [m for m, n in matches]
+    if not crossCheck:
+        matches = [m for m, n in matches]
+    else:
+        matches = [m[0] for m in matches]
 
     truth_points = getMatchesPointWithHomography(kp_ref, matches, homography_matrix_ground_truth)
     inliers_match_index, outliers_match_index = evaluate(matches, kp_perspective, truth_points)
@@ -336,26 +339,26 @@ if __name__ == '__main__':
     name_perspectives = ['darts2_1', 'darts_alul', 'darts_bal', 'darts_felul', 'darts_jobb']
     # name_perspectives = ['darts2_1']
     # minHamming_prefilters = [False, 45, 50, 55]
-    minHamming_prefilters = [False]
+    minHamming_prefilters = [False, 20]
     maxHamming_postfilters = [False]
     # maxHamming_postfilters = range(0, 255, 5)
     cross_Checks = [False]
-    # maxRatio_postfilters = [False, 0.6, 0.7, 0.8]
-    maxRatio_postfilters = [1.0]
+    maxRatio_postfilters = [False, 0.8]
+    # maxRatio_postfilters = [1.0]
     methodNames = ['cvBF', 'FLANN']
 
-    # for name_perspective in name_perspectives:
-    #     data, summary = runMethod(data, summary, methodId, 'BF', name_ref, name_perspective, prefilterValue=False,
-    #                               crossCheck=False, postFilterHamming=False, postFilterRatio=False,
-    #                               outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False,
-    #                                                         postFilterHamming=False, postFilterRatio=False),
-    #                               savePictures=True)
-    #     print(makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False,
-    #                          postFilterRatio=False) + '_' + name_perspective)
-    #     if len(summary) == len(name_perspectives):
-    #         data = addSummaryRow(data, summary)
-    #         summary.clear()
-    #         methodId += 1
+    for name_perspective in name_perspectives:
+        data, summary = runMethod(data, summary, methodId, 'BF', name_ref, name_perspective, prefilterValue=False,
+                                  crossCheck=False, postFilterHamming=False, postFilterRatio=False,
+                                  outputName=makeMethodName('BF', prefilterValue=False, crossCheck=False,
+                                                            postFilterHamming=False, postFilterRatio=False),
+                                  savePictures=True)
+        print(makeMethodName('BF', prefilterValue=False, crossCheck=False, postFilterHamming=False,
+                             postFilterRatio=False) + '_' + name_perspective)
+        if len(summary) == len(name_perspectives):
+            data = addSummaryRow(data, summary)
+            summary.clear()
+            methodId += 1
 
     for methodName in methodNames:
         for maxRatio_postfilter in maxRatio_postfilters:

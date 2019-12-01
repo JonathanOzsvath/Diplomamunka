@@ -61,7 +61,7 @@ if __name__ == '__main__':
     cross_Check_False = list(filter(lambda d: not d[9], data))
     cross_Check_True = list(filter(lambda d: d[9], data))
 
-    x1 = [i[8] for i in cross_Check_True]
+    x1 = [i[8].replace('_check', '') for i in cross_Check_True]
     # x1 = [a[:[i for i, n in enumerate(a) if n == '_'][1]] + '\n' + a[[i for i, n in enumerate(a) if n == '_'][1]:]for a in x1]
     y1 = [i[14] for i in cross_Check_True]
     y2 = [i[14] for i in cross_Check_False]

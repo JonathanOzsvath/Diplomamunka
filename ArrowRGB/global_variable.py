@@ -5,3 +5,5 @@ name_perspectives = ['darts_with_arrow', 'darts_with_arrow2', 'darts_with_arrow3
                          'darts_with_arrow7', 'darts_with_arrow8', 'darts_with_arrow9', 'darts_with_arrow10']
 
 name_perspectives1 = ['darts_with_arrow']
+
+name_perspectives_test = ['darts_with_arrow12']

@@ -97,6 +97,7 @@ if __name__ == '__main__':
         name_perspective_mask_negative = name_perspective + '_mask_negative'
         path_perspective_mask_negative = '../images/' + name_perspective_mask_negative + '.jpg'
         img_perspective_mask_negative = cv2.imread(path_perspective_mask_negative)
+        # img_perspective_mask_negative = cv2.resize(img_perspective_mask_negative, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
 
         cv2.imwrite(directory + name_perspective + '.jpg', img_perspective)
         cv2.imwrite(directory + name_perspective_mask_positive + '.jpg', img_perspective_mask_positive)
