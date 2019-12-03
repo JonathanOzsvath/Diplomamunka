@@ -8,10 +8,16 @@ import image_matcher_eval as ime
 import prefilter
 import postfilter
 import dart_board
+import cutOutside
 
 numberOfKeypoint = 1000
 minHamming_prefilter = 20
 numberOfCirclePointPerSector = 10
+
+def calcDistance(point1, point2):
+    return math.sqrt(
+        (point2[0] - point1[0]) * (point2[0] - point1[0]) + (point2[1] - point1[1]) * (point2[1] - point1[1]))
+
 
 if __name__ == '__main__':
     name = 'darts_with_arrow12_probability_0.3'
@@ -57,8 +63,8 @@ if __name__ == '__main__':
     ransac_circlePoints = ime.Project(circlePoints_ref, homography_ransac)
     ransac_refPoints = ime.Project(refPoints_ref, homography_ransac)
 
-    dart_board.drawDartBoard(img, ransac_refPoints, ransac_circlePoints, numberOfCirclePointPerSector, (0, 255, 0),
-                             savePath="output/" + name_perspective + "_homography_model_to_image.png")
+    # dart_board.drawDartBoard(img, ransac_refPoints, ransac_circlePoints, numberOfCirclePointPerSector, (0, 255, 0),
+    #                          savePath="output/" + name_perspective + "_homography_model_to_image.png")
 
     # ------------
     # # img1 = cv2.Sobel(img1, cv2.CV_8U, 1, 1, ksize=11)
@@ -75,6 +81,21 @@ if __name__ == '__main__':
     # img2 = img1.copy()
     # img2 = cv2.cvtColor(img2, cv2.COLOR_GRAY2BGR)
     #
+    width = img_ref.shape[1]
+    height = img_ref.shape[0]
+
+    inv_homography_ransac = np.linalg.inv(homography_ransac)
+    img1 = cv2.warpPerspective(img1, inv_homography_ransac, (width, height))
+    cv2.imshow("warp", img1)
+
+    tableBoarderPoint = (225 * math.cos(math.radians(0)), 225 * math.sin(math.radians(0)))
+    tableBoarderPoint_ref = ime.Project([tableBoarderPoint], homography_matrix_ref)[0]
+    tableOutsideRadious = calcDistance(midpoint_ref[0], tableBoarderPoint_ref)
+    # TODO grayto rgb
+    img1 = cutOutside.cutOutside(img1, midpoint_ref[0], tableOutsideRadious)
+
+    cv2.imshow("warpCut", img1)
+
     contours, hierarchy = cv2.findContours(img1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # for c in contours:
     #     cv2.drawContours(img2, [c], 0, (0, 0, 255), 3)
