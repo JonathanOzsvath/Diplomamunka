@@ -23,7 +23,6 @@ if __name__ == '__main__':
     name = 'darts_with_arrow12_probability_0.3'
     path = '../images/' + name + '.jpg'
     img = cv2.imread(path)
-    img1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     name_ref = "darts1_1"
     path_ref = '../images/' + name_ref + '.jpg'
@@ -63,8 +62,8 @@ if __name__ == '__main__':
     ransac_circlePoints = ime.Project(circlePoints_ref, homography_ransac)
     ransac_refPoints = ime.Project(refPoints_ref, homography_ransac)
 
-    # dart_board.drawDartBoard(img, ransac_refPoints, ransac_circlePoints, numberOfCirclePointPerSector, (0, 255, 0),
-    #                          savePath="output/" + name_perspective + "_homography_model_to_image.png")
+    dart_board.drawDartBoard(img, ransac_refPoints, ransac_circlePoints, numberOfCirclePointPerSector, (0, 255, 0),
+                             savePath="output/" + name_perspective + "_homography_model_to_image.png")
 
     # ------------
     # # img1 = cv2.Sobel(img1, cv2.CV_8U, 1, 1, ksize=11)
@@ -85,16 +84,18 @@ if __name__ == '__main__':
     height = img_ref.shape[0]
 
     inv_homography_ransac = np.linalg.inv(homography_ransac)
-    img1 = cv2.warpPerspective(img1, inv_homography_ransac, (width, height))
+    img1 = cv2.warpPerspective(img, inv_homography_ransac, (width, height))
+    img1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2BGR)
     cv2.imshow("warp", img1)
 
     tableBoarderPoint = (225 * math.cos(math.radians(0)), 225 * math.sin(math.radians(0)))
     tableBoarderPoint_ref = ime.Project([tableBoarderPoint], homography_matrix_ref)[0]
     tableOutsideRadious = calcDistance(midpoint_ref[0], tableBoarderPoint_ref)
-    # TODO grayto rgb
     img1 = cutOutside.cutOutside(img1, midpoint_ref[0], tableOutsideRadious)
-
     cv2.imshow("warpCut", img1)
+
+    img1 = cv2.warpPerspective(img1, homography_ransac, (width, height))
+    cv2.imshow("warpCutwarp", img1)
 
     contours, hierarchy = cv2.findContours(img1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # for c in contours:
